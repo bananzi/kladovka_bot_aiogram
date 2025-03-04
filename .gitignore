@@ -1,0 +1,28 @@
+# Игнорируем временные файлы Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Игнорируем виртуальное окружение
+bots-env/
+venv/
+*.env
+
+# Игнорируем файлы базы данных SQLite
+db.sqlite3
+*.sqlite3
+
+#Игнор тестовых
+fortest.py
+test_rass.py
+
+
+# Игнорируем временные папки
+fromServer/
+tmp/
+tmp_archivus/
+
+# Игнорируем архивы и логи
+*.zip
+*.7z
+*.log
