@@ -35,10 +35,8 @@ async def cmd_start(message: types.Message, dialog_manager: DialogManager):
 
 @router.message(Command('menu'))
 async def cmd_menu(message: types.Message, dialog_manager: DialogManager):
-    try:
+    if dialog_manager.has_context():
         await dialog_manager.done()
-    except:
-        pass
     await dialog_manager.start(MainMenu.START, data={"user_id": message.from_user.id}, show_mode=ShowMode.EDIT)
 
 @router.callback_query(F.data == "kruto!")
@@ -61,4 +59,4 @@ async def hello_words_end(callback_query: CallbackQuery, dialog_manager: DialogM
     # Отвечаем на callback, чтобы кнопка не оставалась выделенной
     await bot.answer_callback_query(callback_query.id)
     
-    await dialog_manager.start(MainMenu.START, data={"user_id": callback_query.message.from_user.id}, show_mode=ShowMode.SEND) 
+    await dialog_manager.start(MainMenu.START, data={"user_id": callback_query.from_user.id}, show_mode=ShowMode.SEND) 

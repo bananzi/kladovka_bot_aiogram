@@ -76,17 +76,18 @@ async def process_selecting_time(message: Message,
     try:
         if not (0 <= int(user_input) <= 23):
 
-            await message.answer(text='Введённое значение указано не в верном формате, проверьте')
+            await message.answer(text='Введённое значение указано не в верном формате, проверь его')
             return
     except ValueError as e:
-        await message.answer(text='Введённое значение указано не в верном формате, проверьте')
+        await message.answer(text='Введённое значение указано не в верном формате, проверь его')
         print(e)
         return
     user_id = message.from_user.id
     await rq.set_time_mailing(tg_id=user_id, selected_time=user_input)
     await scheduler_func.add_schedule_task(tg_id=user_id, hour=int(user_input))
-    await mailing.mail_sertain_text(chat_id=user_id, text='Ваше время сохранено.')
-    await dialog_manager.done()
+    await mailing.mail_sertain_text(chat_id=user_id, text='Твоё время сохранено. Чтобы вернуться в главное меня отправьте команду /menu')
+    await dialog_manager.reset_stack()
+    
 
 
 # Переделать логику оплаты, с учётом, что теперь у нас не периоды, а конкретные курсы
@@ -131,13 +132,13 @@ payment_menu = Dialog(
             "Более подробное описание того, что ты получишь на каждом из курсов, ты сможешь увидеть, перейдя по одной из кнопок:"
         ),
 
-        Button(Const(f"{list_course[1]}"), id="one_week",
+        Button(Const(f"{list_course[1]}"), id="first_couse",
                on_click=wind_one),
-        Button(Const(f"{list_course[2]}"), id="one_mounth",
+        Button(Const(f"{list_course[2]}"), id="second_couse",
                on_click=wind_two),
-        Button(Const(f"{list_course[3]}"), id="two_mounth",
+        Button(Const(f"{list_course[3]}"), id="third_couse",
                on_click=wind_three),
-        Button(Const(f"{list_course[4]}"), id="two_mounth",
+        Button(Const(f"{list_course[4]}"), id="blank_couse",
                on_click=wind_blank),
         Row(
             Cancel(Const("Вернуться в главное меню"))

@@ -3,16 +3,16 @@ from typing import Dict
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram import types
 
-
 from aiogram.fsm.state import State, StatesGroup
 from aiogram_dialog import Dialog, Window, DialogManager
+from aiogram_dialog.widgets.media import StaticMedia
 from aiogram_dialog.widgets.common import Whenable
 from aiogram_dialog.widgets.text import Const
 from aiogram_dialog.widgets.kbd import Button, Row, Start, Cancel  # noqa: F401
 from aiogram.types import FSInputFile
-from aiogram_dialog.api.entities.launch_mode import LaunchMode
+from aiogram_dialog.api.entities.modes import ShowMode
 # Локальные
-from dialogs.payment_diag import PaymentMenu
+from dialogs.payment_diag import PaymentMenu, process_selecting_time
 from dialogs.tp_diag import TPBot
 from utils import mailing
 from database import requests as rq
@@ -56,12 +56,9 @@ async def start_pay_diag(callback, button: Button,
 
 async def sub_set_payment(callback, button: Button,
                           dialog_manager: DialogManager):
-    await callback.message.answer_photo(
-        FSInputFile(path="D:\\code\\podsobka\\utils\\tmp\\Пробный период.png"),
-        caption='В пробном периоде мы можем предложить вам только присылку задания в 9 утра ежедневно. При оформлении подписки вы получите возможность выбрать час, в котором хотите получать задания.'
-        )
     await rq.set_payment(dialog_manager.dialog_data['user_id'],course_id=0, duration_days_pay=3)
-    await dialog_manager.switch_to(state=MainMenu.START)
+    await dialog_manager.start(state=PaymentMenu.SELECT_TIME)
+    #await dialog_manager.switch_to(state=MainMenu.START, show_mode=ShowMode.SEND)
 
 
 async def next_wind(callback, button: Button,
@@ -127,10 +124,12 @@ main_menu = Dialog(
         state=MainMenu.START
     ),
     Window(
+        StaticMedia(
+            path="D:\\code\\podsobka\\utils\\tmp\\Пробный период.png"
+            ),
         Const("Пробный период длится 3 дня. Выбери время, в которое тебе будет удобно получать задания⏰. Помни, что задание можно выполнить только до 23.59 того дня, в которое ты его получил.\nДавай начнем!"),
         Button(Const("Начнём!"), id="trial", on_click=sub_set_payment),
         Button(Const("Вернуться меню"), id='back_main', on_click=back_wind),
         state=MainMenu.TestQuest,
     ),
-
 )
