@@ -1,5 +1,9 @@
 from typing import Dict
 
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram import types
+
+
 from aiogram.fsm.state import State, StatesGroup
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.common import Whenable
@@ -12,7 +16,7 @@ from dialogs.payment_diag import PaymentMenu
 from dialogs.tp_diag import TPBot
 from utils import mailing
 from database import requests as rq
-
+from text import quest_1
 
 async def get_id(dialog_manager: DialogManager, **kwargs):
     dialog_manager.dialog_data['user_id'] = dialog_manager.start_data['user_id']
@@ -52,8 +56,10 @@ async def start_pay_diag(callback, button: Button,
 
 async def sub_set_payment(callback, button: Button,
                           dialog_manager: DialogManager):
-    await callback.message.answer_photo(FSInputFile(path="D:\\code\\podsobka\\utils\\tmp\\Пробный период.png"))
-    await callback.message.answer(text='В пробном периоде мы можем предложить вам только присылку задания в 9 утра ежедневно. При оформлении подписки вы получите возможность выбрать час, в котором хотите получать задания.')
+    await callback.message.answer_photo(
+        FSInputFile(path="D:\\code\\podsobka\\utils\\tmp\\Пробный период.png"),
+        caption='В пробном периоде мы можем предложить вам только присылку задания в 9 утра ежедневно. При оформлении подписки вы получите возможность выбрать час, в котором хотите получать задания.'
+        )
     await rq.set_payment(dialog_manager.dialog_data['user_id'],course_id=0, duration_days_pay=3)
     await dialog_manager.switch_to(state=MainMenu.START)
 
@@ -67,6 +73,28 @@ async def back_wind(callback, button: Button,
                     dialog_manager: DialogManager):
     await dialog_manager.back()
 
+async def test_text(callback, button: Button, dialog_manager: DialogManager):
+    keyboard5 = InlineKeyboardBuilder()
+    keyboard5.row(types.InlineKeyboardButton(
+        text="Читать задание",
+        url=quest_1[4]["url"])
+    )
+    await callback.message.answer_photo(
+        FSInputFile(path=f"D:\\code\\podsobka\\utils\\tmp\\{quest_1[4]["photo"]}"),
+        caption=quest_1[4]["text"],
+        reply_markup=keyboard5.as_markup()
+        )
+    keyboard6 = InlineKeyboardBuilder()
+    keyboard6.row(types.InlineKeyboardButton(
+        text="Читать задание",
+        url=quest_1[5]["url"])
+    )
+    await callback.message.answer_photo(
+        FSInputFile(path=f"D:\\code\\podsobka\\utils\\tmp\\{quest_1[5]["photo"]}"),
+        caption=quest_1[5]["text"],
+        reply_markup=keyboard6.as_markup()
+    )
+    return
 
 class MainMenu(StatesGroup):
     START = State()
@@ -90,6 +118,10 @@ main_menu = Dialog(
         Row(
             Button(Const(text="Отправить ответ на задание"),
                    id="send", on_click=done_main, when=may_send_answer),
+        ),
+        Row(
+            Button(Const("test text"),
+                   id="test_text", on_click=test_text)
         ),
         getter=get_id,
         state=MainMenu.START

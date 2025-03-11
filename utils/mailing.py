@@ -43,7 +43,7 @@ async def mailing(tg_id):
     really_end = await rq.it_user_end(tg_id)
 
     if not really_end:
-        if quests[current_day][1] != "0":
+        if quests[current_day]["photo"] != 0:
             await mail_sertain_photo(chat_id=tg_id, path=f"utils\\tmp\\{quests[current_day][1]}")
         await mail_sertain_text(chat_id=tg_id, text=quests[current_day][0])
         

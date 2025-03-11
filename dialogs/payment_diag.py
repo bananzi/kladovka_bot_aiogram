@@ -13,7 +13,7 @@ from database import requests as rq
 from utils import mailing, scheduler_func
 from config_reader import config
 
-list_course = {1: "1 Курс",
+list_course = {1: "Как вдохновляться чужим?",
                2: "2 Курс",
                3: "3 Курс",
                4: "... Курс"}

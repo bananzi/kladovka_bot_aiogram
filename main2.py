@@ -3,21 +3,22 @@ import asyncio
 import logging
 import datetime
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram import Bot, Dispatcher
 from aiogram import F
-from aiogram.types import PreCheckoutQuery, Message, ContentType
-
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from aiogram.filters import ExceptionTypeFilter
+from aiogram.types import PreCheckoutQuery, Message, ContentType
 from aiogram_dialog import DialogManager, StartMode
 from aiogram_dialog.api.exceptions import UnknownIntent
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 # импорты локальных файлов
 from database import models
 from database import requests as rq
+from dialogs.payment_diag import PaymentMenu
 from init_routers import initialise
 from utils.mailing import mailing, mail_sertain_text
-from dialogs.payment_diag import PaymentMenu
 # импорт конфига
 from config_reader import config
 
@@ -51,7 +52,12 @@ async def main():
     # print(await rq.get_paid_user_id_day(11))
 
     # Объект бота
-    bot = Bot(token=config.bot_token.get_secret_value())
+    bot = Bot(
+        token=config.bot_token.get_secret_value(),
+        default=DefaultBotProperties(
+            parse_mode=ParseMode.HTML
+        )
+    )
     # Диспетчер
     dp = Dispatcher()
 
