@@ -41,7 +41,6 @@ async def pre_pay(callback, button: Button,
     await process_payment(callback=callback, button=button, dialog_manager=dialog_manager)
 
     await callback.message.answer(text='Оплати квитанцию выше, затем ты сможешь продолжить')
-    
 
 
 async def process_payment(callback, button: Button,
@@ -69,25 +68,35 @@ async def process_payment(callback, button: Button,
         # Можно запрашивать email, если нужно
     )
 
+
 async def process_selecting_time(message: Message,
                                  message_input: MessageInput,
                                  dialog_manager: DialogManager,):
-    user_input = message.text
-    try:
-        if not (0 <= int(user_input) <= 23):
 
-            await message.answer(text='Введённое значение указано не в верном формате, проверь его')
+    try:
+        user_input_raw = message.text
+        if len(user_input_raw.split(":")) != 2:
+            await message.answer(text='Введённое значение указано не в верном формате, проверь его. Оно должно быть «час:минуты».')
             return
+        else:
+            user_input = user_input_raw.split(":")
+
+        if not (0 <= int(user_input[0]) <= 23):
+            await message.answer(text='Введённое значение указано не в верном формате, проверь его. Оно должно быть «час:минуты».')
+            return
+        elif not (0 <= int(user_input[1]) <= 59):
+            await message.answer(text='Введённое значение указано не в верном формате, проверь его. Оно должно быть «час:минуты».')
+            return
+
     except ValueError as e:
         await message.answer(text='Введённое значение указано не в верном формате, проверь его')
         print(e)
         return
     user_id = message.from_user.id
-    await rq.set_time_mailing(tg_id=user_id, selected_time=user_input)
-    await scheduler_func.add_schedule_task(tg_id=user_id, hour=int(user_input))
-    await mailing.mail_sertain_text(chat_id=user_id, text='Твоё время сохранено. Чтобы вернуться в главное меня отправьте команду /menu')
+    await rq.set_time_mailing(tg_id=user_id, selected_time_hour=user_input[0], selected_time_minute=user_input[1])
+    await scheduler_func.add_schedule_task(tg_id=user_id, hour=int(user_input[0]), minute=int(user_input[1]))
+    await mailing.mail_sertain_text(chat_id=user_id, text='Твоё время сохранено. Чтобы вернуться в главное меню отправьте команду /menu')
     await dialog_manager.reset_stack()
-    
 
 
 # Переделать логику оплаты, с учётом, что теперь у нас не периоды, а конкретные курсы
@@ -195,7 +204,7 @@ payment_menu = Dialog(
         state=PaymentMenu.BLANK_COURSE
     ),
     Window(
-        Const("Выбери время, в которое тебе будет удобно получать задания⏰. \nПомни, что задание можно выполнить только до 23.59 того дня, в которое ты его получил.\n\n Для этого напиши одно число - час(от 0 до 23), в который ты хочешь, чтобы приходили задания"),
+        Const("Выбери время, в которое тебе будет удобно получать задания⏰. \nПомни, что задание можно выполнить только до 23.59 того дня, в которое ты его получил.\n\n Для этого напиши время в формате «час:минуты» (Например 22:15), в которое ты хочешь, чтобы приходили задания"),
         MessageInput(process_selecting_time),
         state=PaymentMenu.SELECT_TIME
     )

@@ -21,12 +21,12 @@ scheduler.start()
 async def import_scheduler_tasks():
     list_jobs = await rq.get_schedules_list()
     for job in list_jobs:
-        await add_schedule_task(tg_id=job[0], hour=job[1])
+        await add_schedule_task(tg_id=job[0], hour=job[1], minute=job[2])
     scheduler.add_job(rq.update_payments, trigger='cron',
                  hour=0, start_date=datetime.datetime.today()-datetime.timedelta(days=1))
     
     scheduler.print_jobs()
 
-async def add_schedule_task(tg_id, hour):
+async def add_schedule_task(tg_id, hour, minute):
     scheduler.add_job(mailing, trigger='cron',
-                 hour=hour, day_of_week='mon-fri',start_date=datetime.datetime.today()-datetime.timedelta(days=1), kwargs={"tg_id": tg_id})
+                 hour=hour, minute=minute, day_of_week='mon-fri',start_date=datetime.datetime.today()-datetime.timedelta(days=1), kwargs={"tg_id": tg_id})

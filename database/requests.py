@@ -74,16 +74,17 @@ async def set_pre_pay(tg_id, period):
     finally:
         await session.close()  # Закрываем сессию
 
-async def set_time_mailing(tg_id, selected_time: int):
+async def set_time_mailing(tg_id, selected_time_hour: int,  selected_time_minute: int):
     try:
         async with async_session() as session:
             user = await session.scalar(select(TimeMailing).where(TimeMailing.tg_id == tg_id))
 
             if not user:
-                session.add(TimeMailing(tg_id = tg_id, time_hour = selected_time))
+                session.add(TimeMailing(tg_id = tg_id, time_hour = selected_time_hour, time_minute = selected_time_minute))
             else:
                 update_query = update(TimeMailing).where(TimeMailing.id == user.id).values(
-                    {"time_hour": selected_time})
+                    {"time_hour": selected_time_hour,
+                     "time_minute": selected_time_minute})
                 await session.execute(update_query)
             await session.commit()
     except Exception as e:
@@ -207,7 +208,7 @@ async def get_schedules_list():
             list_current_job = []
             db_list_jobs = await session.scalars(select(TimeMailing))
             for user in db_list_jobs:
-                list_current_job.append((user.tg_id, user.time_hour))
+                list_current_job.append((user.tg_id, user.time_hour, user.time_minute))
             return list_current_job
     except Exception as e:
         await session.rollback()  # Откатываем сессию при ошибке
