@@ -34,8 +34,9 @@ async def download_photo(message: Message, bot: Bot, user_id: int):
             destination=f"{download_path}\\{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.jpg"
         )
         await bot.send_message(chat_id=user_id, text=dowload_anwers["ok"])
-    except Exception:
+    except Exception as e:
         await bot.send_message(chat_id=user_id, text=dowload_anwers["error"])
+        print(f"{user_id} получил ошибку <<{e}>> при загрузке фото")
 
 @router.message(F.text)
 async def download_text(message: Message, bot: Bot, user_id: int):
@@ -45,8 +46,9 @@ async def download_text(message: Message, bot: Bot, user_id: int):
         with open(f"{download_path}\\{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.txt", "w") as file:
             file.write(message.text)
         await bot.send_message(chat_id=user_id, text=dowload_anwers['ok'])
-    except Exception:
+    except Exception as e:
         await bot.send_message(chat_id=user_id, text=dowload_anwers['error'])
+        print(f"{user_id} получил ошибку <<{e}>> при загрузке текста")
 
 @router.message(F.video)
 async def download_video(message: Message, bot: Bot, user_id: int):
@@ -57,5 +59,6 @@ async def download_video(message: Message, bot: Bot, user_id: int):
         file = await bot.get_file(file_id) 
         await bot.download_file(file.file_path, f"{download_path}\\{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.mp4")
         await bot.send_message(chat_id=user_id, text=dowload_anwers['ok'])
-    except Exception:
+    except Exception as e:
         await bot.send_message(chat_id=user_id, text=dowload_anwers['error'])
+        print(f"{user_id} получил ошибку <<{e}>> при загрузке видео")
