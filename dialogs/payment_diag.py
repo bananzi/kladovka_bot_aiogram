@@ -1,6 +1,5 @@
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import Message, ContentType
-from aiogram.types import LabeledPrice, PreCheckoutQuery
+from aiogram.types import Message, ContentType, LabeledPrice, PreCheckoutQuery
 
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.api.entities.modes import StartMode, ShowMode
@@ -87,7 +86,7 @@ async def process_selecting_time(message: Message,
     Проверки... Создание job для этого пользователя для рассылки. Запись в БД. Возврат в гравное меню.
     '''
     try:
-        user_input_raw = message.text
+        user_input_raw = message.text.strip()
         if len(user_input_raw.split(":")) != 2:
             await message.answer(text='Введённое значение указано не в верном формате, проверь его. Оно должно быть «час:минуты».')
             return

@@ -40,14 +40,14 @@ async def download(message: Message,
 
 admin_menu = Dialog(
     Window(
-        Const(text='Здраствуйте админиcтратор, ваши полномочия: '),
+        Const(text='Здравствуйте админиcтратор, ваши полномочия: '),
         Start(Const("Загрузить все работы"),
               id="download", state=AdminDialog.download),
 
         state=AdminDialog.START
     ),
     Window(
-        Const(text="Напишите даты в формате <<гггг-мм-дд>>_<<гггг-мм-дд>>"),
+        Const(text="Напишите даты в формате «гггг-мм-дд»_«гггг-мм-дд»"),
         MessageInput(download),
         state=AdminDialog.download
     )

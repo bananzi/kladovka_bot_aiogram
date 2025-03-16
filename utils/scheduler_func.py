@@ -39,7 +39,7 @@ async def add_schedule_task(tg_id, hour, minute):
     '''
     job_id = f"job_{tg_id}"
     scheduler.add_job(
-        mailing, 
+        mailing,
         trigger='cron',
         hour=hour,
         minute=minute,
@@ -47,3 +47,33 @@ async def add_schedule_task(tg_id, hour, minute):
         id=job_id,
         kwargs={"tg_id": tg_id}
     )
+
+
+async def remove_schedule_task(tg_id):
+    '''
+    :tg_id: id пользователя, у которого нужно удалить job рассылки.
+
+    Функция удаляет job для данного пользователя.
+    '''
+    job_id = f"job_{tg_id}"
+    if scheduler.get_job(job_id):  # Проверяем, есть ли такая задача
+        scheduler.remove_job(job_id)  # Удаляем задачу
+        schedule_logger.info(f"Удалена старая job для пользователя {tg_id}")
+
+
+async def update_schedule_task(tg_id, new_hour, new_minute):
+    '''
+    :tg_id: id пользователя, у которого нужно обносить время рассылки.
+    :new_hour: Новый выранный час.
+    :new_minute: Новые выбранные минуты.
+
+    Функция позволяющая обновить время рассылки пользователя.
+    '''
+    # Удаляем старую задачу
+    await remove_schedule_task(tg_id)
+
+    # Обновляем запись в БД
+    await rq.update_user_schedule(tg_id, new_hour, new_minute)
+
+    # Добавляем новую задачу
+    await add_schedule_task(tg_id, new_hour, new_minute)

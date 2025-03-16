@@ -77,7 +77,7 @@ async def download_zippp(message: Message):
     Функция обрабатывает запрос админа для закачки архива с ответами и запускает соответсвующую функцию.
     '''
     chat_id = message.from_user.id
-    mess = message.text.split('_')
+    mess = message.text.strip().split('_')
     start = mess[0]
     end = mess[1]
 

@@ -276,3 +276,23 @@ async def get_schedules_list():
         raise e  # Поднимаем исключение дальше
     finally:
         await session.close()  # Закрываем сессию
+
+async def update_user_schedule(tg_id, new_hour, new_minute):
+    '''
+    :tg_id: id пользователя, которому нужно изменить время в БД
+    :`new_hour, new_minute`: Новое время
+
+    Функция обновляет время у пользователя в БД `TimeMailing`.
+    '''
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(TimeMailing).where(TimeMailing.tg_id == tg_id))
+            if user:
+                user.time_hour = new_hour
+                user.time_minute = new_minute
+                await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
