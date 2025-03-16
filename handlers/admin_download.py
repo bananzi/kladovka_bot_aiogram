@@ -19,13 +19,23 @@ def append_zero(a: int):
     return str(a) if a > 9 else f"0{str(a)}"
 
 
-async def download_zip(id, start_y, start_m, start_d, end_y, end_m, end_d):
+async def download_zip(admin_id, start_y, start_m, start_d, end_y, end_m, end_d):
+    '''
+    :admin_id: id админа, который хочет загручить архив ответов.
+    :start_y: год начала ответов
+    :start_m: месяц начала ответов
+    :start_d: день начала ответов
+    :end_y: год конца ответов
+    :end_m: месяц конца ответов
+    :end_d: день конца ответов
 
+    Отправляет админу архив с ответами пользователей в заданном временом промежутке.
+    '''
     BASE_DIR = Path(__file__).resolve().parent.parent
     source1 = f"{BASE_DIR}\\tmp"
     distinate = f"{BASE_DIR}\\tmp_archivus"
     mkdir(distinate)
-    #print(f'{BASE_DIR}\n{distinate}')
+    # print(f'{BASE_DIR}\n{distinate}')
     # Создание архивов по выбранным датам
     while int(start_y) <= int(end_y):
         while int(start_m) <= int(end_m):
@@ -34,12 +44,12 @@ async def download_zip(id, start_y, start_m, start_d, end_y, end_m, end_d):
                 need_m = append_zero(start_m)
                 need_d = append_zero(start_d)
 
-                print(f"{source1}\\{need_y}-{need_m}-{need_d}")
+                # print(f"{source1}\\{need_y}-{need_m}-{need_d}")
                 try:
                     need_source = f"{source1}\\{need_y}-{need_m}-{need_d}"
                     need_distinate = f"{distinate}\\{need_y}-{need_m}-{need_d}"
                     shutil.copytree(need_source, need_distinate)
-                    print(f"{need_y}-{need_m}-{need_d}------------ok")
+                    # print(f"{need_y}-{need_m}-{need_d}------------ok")
                 except Exception as e:
                     print(e)
                 start_d += 1
@@ -51,7 +61,7 @@ async def download_zip(id, start_y, start_m, start_d, end_y, end_m, end_d):
     # Создание окончательного архива дл пересылки
     source2 = f'{BASE_DIR}\\tmp_archivus'     # str
     arch = shutil.make_archive(f"archivus\\{date.today()}", "zip", source2)
-    await mailing.mail_file(id=id, file_path=arch)
+    await mailing.mail_file(id=admin_id, file_path=arch)
     remove(arch)
     remove(distinate)
     return
@@ -61,6 +71,11 @@ async def download_zip(id, start_y, start_m, start_d, end_y, end_m, end_d):
 
 
 async def download_zippp(message: Message):
+    '''
+    :message: Сообщение от админа в формате yy-mm-dd_yy-mm-dd, где это временой отрезок для ответов пользователей.
+
+    Функция обрабатывает запрос админа для закачки архива с ответами и запускает соответсвующую функцию.
+    '''
     chat_id = message.from_user.id
     mess = message.text.split('_')
     start = mess[0]

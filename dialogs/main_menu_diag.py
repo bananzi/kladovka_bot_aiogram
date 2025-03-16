@@ -19,6 +19,10 @@ from database import requests as rq
 from text import quest_1
 
 async def get_id(dialog_manager: DialogManager, **kwargs):
+    '''
+    Геттер id при старте диалога из start_data. Проверка на наличие оплаченного курса у пользователя.
+    Если так, то в диалоге меняются кнопки.
+    '''
     dialog_manager.dialog_data['user_id'] = dialog_manager.start_data['user_id']
     user_from_Courses = await rq.get_user_in_course(dialog_manager.start_data['user_id'])
     if not user_from_Courses:
@@ -31,19 +35,23 @@ async def get_id(dialog_manager: DialogManager, **kwargs):
 
 
 def not_yet_testing(data: Dict, widget: Whenable, manager: DialogManager):
+    '''Возращает True, если пользователь не на тесте и не на оплаченном курсе.'''
     return not (data['dialog_data']["is_testing"] or data['dialog_data']["is_paid"])
 
 
 def not_yet_paid(data: Dict, widget: Whenable, manager: DialogManager):
+    '''Возвращает True, если пользователь НЕ в оплаченном курсе.'''
     return not data['dialog_data']["is_paid"]
 
 
 def may_send_answer(data: Dict, widget: Whenable, manager: DialogManager):
+    '''Возвращает True, если есть запись, что он на каком-лтбо курсе, в т.ч. тестовый.'''
     return data['dialog_data']["is_paid"]
 
 
 async def done_main(callback, button: Button,
                     dialog_manager: DialogManager):
+    '''Завершает диалог, чтобы пользователь смог отправить ответ на задание через diferent_hand.'''
     await callback.message.delete()
     await callback.message.answer(text="Сейчас вы сможете отправить свой ответ на задание. Для возврата в главное меню ипользуйте команду /menu")
     await dialog_manager.done()
@@ -51,11 +59,13 @@ async def done_main(callback, button: Button,
 
 async def start_pay_diag(callback, button: Button,
                          dialog_manager: DialogManager):
+    '''Функция стартует диалог с оплатой'''
     await dialog_manager.start(PaymentMenu.START, data=dialog_manager.dialog_data)
 
 
 async def sub_set_payment(callback, button: Button,
                           dialog_manager: DialogManager):
+    '''Функция для записи на пробный период.'''
     await rq.set_payment(dialog_manager.dialog_data['user_id'],course_id=0, duration_days_pay=3)
     await dialog_manager.start(state=PaymentMenu.SELECT_TIME)
     #await dialog_manager.switch_to(state=MainMenu.START, show_mode=ShowMode.SEND)

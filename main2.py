@@ -24,18 +24,28 @@ from config_reader import config
 
 
 async def on_unknown_intent(event, dialog_manager: DialogManager):
+    '''
+    Обработка моментов, когда пользователь тыкает на кнопку после перезапуска бота. (Может ещё что вылавливает)
+    '''
     chat_id = event.update.callback_query.from_user.id
     logging.error("Restarting dialog: %s" +
                   f"; user: {chat_id}", event.exception)
-    await mail_sertain_text(chat_id=chat_id,
-                            text="Произошла небольшая ошибка на сервере, вероятнее всего бот был перезапущен. Если вы хотите увидеть приветсвенное сообщение, то введите /start. Если вы хотите войти в главное меню, то введите /menu. \n В случае, если проблема повторилась, советуем обратиться в техническую поддержку @Bananzi.")
+    await mail_sertain_text(tg_id=chat_id,
+                            text="Произошла небольшая ошибка на сервере, вероятнее всего бот был перезапущен. Если ты хочешь увидеть приветсвенное сообщение, то введи /start. Если ты хочешь войти в главное меню, то введи /menu. \n В случае, если проблема повторилась, советуем обратиться в техническую поддержку @Bananzi.")
 
 
 async def pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
+    '''
+    Проверка оплаты от телеграмма
+    '''
     await pre_checkout_query.answer(ok=True)
 
 
 async def process_successful_payment(message: Message, dialog_manager: DialogManager):
+    '''
+    Процесс после оплаты. Мы заносим в БД купленный пользователем курс.\n
+    И даём ему выбрать время в окне PaymentMenu.SELECT_TIME
+    '''
     course_id = int(message.successful_payment.invoice_payload)
     user_id = message.from_user.id
 

@@ -25,12 +25,18 @@ PRICE_LIST = {
 
 
 async def get_id(dialog_manager: DialogManager, **kwargs):
+    '''
+    Геттер id при старте диалога и запихивает его в dialog_data.
+    '''
     dialog_manager.dialog_data['user_id'] = dialog_manager.start_data['user_id']
     return {}
 
 
 async def pre_pay(callback, button: Button,
                   dialog_manager: DialogManager):
+    '''
+    Старт процесса оплаты. Где идёт проверка на уже наличие курса и запуск основной функции.
+    '''
     user_id = dialog_manager.dialog_data['user_id']
     course_id = dialog_manager.dialog_data['course_id']
     # Проверяем, есть ли активная подписка
@@ -45,6 +51,9 @@ async def pre_pay(callback, button: Button,
 
 async def process_payment(callback, button: Button,
                           dialog_manager: DialogManager):
+    '''
+    Процесс оплаты... Проверки... Высылка счёта...
+    '''
     user_id = dialog_manager.dialog_data['user_id']
     course_id = dialog_manager.dialog_data.get("course_id")
 
@@ -72,7 +81,11 @@ async def process_payment(callback, button: Button,
 async def process_selecting_time(message: Message,
                                  message_input: MessageInput,
                                  dialog_manager: DialogManager,):
+    '''
+    :message: Сообщение в формате "час:минуты" от пользователя.
 
+    Проверки... Создание job для этого пользователя для рассылки. Запись в БД. Возврат в гравное меню.
+    '''
     try:
         user_input_raw = message.text
         if len(user_input_raw.split(":")) != 2:
@@ -95,7 +108,7 @@ async def process_selecting_time(message: Message,
     user_id = message.from_user.id
     await rq.set_time_mailing(tg_id=user_id, selected_time_hour=user_input[0], selected_time_minute=user_input[1])
     await scheduler_func.add_schedule_task(tg_id=user_id, hour=int(user_input[0]), minute=int(user_input[1]))
-    await mailing.mail_sertain_text(chat_id=user_id, text='Твоё время сохранено. Чтобы вернуться в главное меню отправьте команду /menu')
+    await mailing.mail_sertain_text(tg_id=user_id, text='Твоё время сохранено. Чтобы вернуться в главное меню отправьте команду /menu')
     await dialog_manager.reset_stack()
 
 

@@ -5,6 +5,9 @@ from sqlalchemy import select, update, and_
 
 
 async def set_user(tg_id):
+    '''
+    :tg_id: id пользователя, которое мы записываем в таблицу User, если его там нет.
+    '''
     try:
         async with async_session() as session:
             user = await session.scalar(select(User).where(User.tg_id == tg_id))
@@ -19,7 +22,11 @@ async def set_user(tg_id):
         await session.close()  # Закрываем сессию
 
 async def is_user_paid(tg_id) -> bool:
-    """ Проверяет, есть ли у пользователя активная подписка. """
+    '''
+    :tg_id: id проверяемого пользователя на наличие оплаты.\n
+    Проверяет, есть ли у пользователя активная подписка.
+    Возвращает True, если пользователь уже оплатил.
+    '''
     try:
         async with async_session() as session:
             active_payment = await session.scalar(select(Course).where(
@@ -33,6 +40,13 @@ async def is_user_paid(tg_id) -> bool:
         await session.close()
 
 async def set_payment(tg_id,course_id, duration_days_pay):
+    '''
+    :tg_id: id ползователя
+    :course_id: id курса
+    :duration_days_pay: длительность курса в днях
+
+    Добавляет запись в БД о пользователе, который зачислен в выбранный курс.
+    '''
     try:
         async with async_session() as session:
             already_pay = await session.scalar(select(Course).where(
@@ -43,7 +57,7 @@ async def set_payment(tg_id,course_id, duration_days_pay):
                 session.add(Course(
                     tg_id=tg_id,
                     is_paid=True,
-                    course_id=course_id,  # Новый параметр
+                    course_id=course_id,
                     payment_period=duration_days_pay,
                     start_period=datetime.date.today() + datetime.timedelta(days=1),
                     end_period=datetime.date.today() + datetime.timedelta(days=duration_days_pay),
@@ -57,6 +71,9 @@ async def set_payment(tg_id,course_id, duration_days_pay):
         await session.close()  # Закрываем сессию
 
 async def set_pre_pay(tg_id, period):
+    '''
+    В данный момент лишняя функция
+    '''
     try:
         async with async_session() as session:
             user = await session.scalar(select(PrePayment).where(PrePayment.tg_id == tg_id))
@@ -75,6 +92,13 @@ async def set_pre_pay(tg_id, period):
         await session.close()  # Закрываем сессию
 
 async def set_time_mailing(tg_id, selected_time_hour: int,  selected_time_minute: int):
+    '''
+    :tg_id: id пользователя.
+    :selected_time_hour: Выбранный пользователем час.
+    :selected_time_minute: Выбранные пользователем минуты в часе.
+
+    Добавляет/обновляет запись в БД TimeMailing данные о вемени для рассылки для пользователя.
+    '''
     try:
         async with async_session() as session:
             user = await session.scalar(select(TimeMailing).where(TimeMailing.tg_id == tg_id))
@@ -94,6 +118,11 @@ async def set_time_mailing(tg_id, selected_time_hour: int,  selected_time_minute
         await session.close()  # Закрываем сессию
 
 async def add_day(tg_id):
+    '''
+    :tg_id: id пользователя
+
+    Добавляет день ???
+    '''
     try:
         async with async_session() as session:
             user = await session.scalars(select(Course).where(Course.tg_id == tg_id))
@@ -110,6 +139,9 @@ async def add_day(tg_id):
 
 
 async def get_paid_user_id_day(tg_id):
+    '''
+    В данный момент бесполезная функция
+    '''
     all_paid_users = await get_all_paid_users()
     paid_users_id_day = []
     for user in all_paid_users:
@@ -125,6 +157,9 @@ async def get_paid_user_id_day(tg_id):
 
 
 async def get_all_paid_users():
+    '''
+    В данный момент бесполезная функция
+    '''
     try:
         async with async_session() as session:
             now_date = datetime.date.today() + datetime.timedelta(days=1)
@@ -137,6 +172,11 @@ async def get_all_paid_users():
         await session.close()  # Закрываем сессию
 
 async def get_user_in_course(tg_id):
+    '''
+    :tg_id: id искомого пользователя.
+
+    Возвращает строку с пользователем если он \"на курсе\". Иначе пустой возврат.
+    '''
     try:
         async with async_session() as session:
             return await session.scalar(select(Course).where(Course.tg_id == tg_id))
@@ -146,6 +186,9 @@ async def get_user_in_course(tg_id):
 
 
 async def update_payments():
+    '''
+    Обновляет данные в БД, если срок курса у пользоватя вышел, то ставит в столбец is_paid значение False.
+    '''
     try:
         async with async_session() as session:
            # users = await get_all_paid_users()
@@ -161,6 +204,9 @@ async def update_payments():
         await session.close()  # Закрываем сессию
 
 async def get_end_users():
+    '''
+    Возращает список с tg_id пользователей, у которых закончился курс.
+    '''
     try:
         async with async_session() as session:
             end_users = []
@@ -176,6 +222,11 @@ async def get_end_users():
         await session.close()  # Закрываем сессию
 
 async def it_user_end(tg_id):
+    '''
+    :tg_id: id искомого пользователя.
+
+    Возращает True, если курс у пользователя закончился по количеству дней. Иначе False.
+    '''
     try:
         async with async_session() as session:
             this_user = await session.scalars(select(Course).where(Course.tg_id == tg_id))
@@ -190,6 +241,11 @@ async def it_user_end(tg_id):
         await session.close()  # Закрываем сессию
 
 async def what_day_user(tg_id):
+    '''
+    :tg_id: id пользователя для узнавания дня.
+
+    Возвращает номер дня курса для переданного пользователя.
+    '''
     try:
         async with async_session() as session:
             db_current_user = await session.scalars(select(Course).where(Course.tg_id == tg_id))
@@ -203,6 +259,11 @@ async def what_day_user(tg_id):
         await session.close()  # Закрываем сессию
 
 async def get_schedules_list():
+    '''
+    Возвращает список записанных времени рассылок в БД.
+
+    :return: (tg_id, hour, minute)
+    '''
     try:
         async with async_session() as session:
             list_current_job = []
