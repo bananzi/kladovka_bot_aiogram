@@ -7,6 +7,7 @@ sleep_sec = 0.4
 
 
 class SlowpokeMiddleware(BaseMiddleware):
+    '''Мидлварь для задержки обработки сообщений, чтоб телеграм сильно не жаловался.'''
     def __init__(self):
         self.sleep_sec = sleep_sec
 
