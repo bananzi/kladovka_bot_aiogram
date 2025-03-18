@@ -31,6 +31,7 @@ class Course(Base):
     end_period: Mapped[str] = mapped_column(String(20))
 
     day_number: Mapped[int] = mapped_column()
+    already_received: Mapped[bool] = mapped_column(insert_default=False)
 
 
 class PrePayment(Base):
