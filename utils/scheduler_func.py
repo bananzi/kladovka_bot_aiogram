@@ -12,9 +12,19 @@ from database import requests as rq
 scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 schedule_logger = logging.getLogger('schedule')
 schedule_logger.setLevel(level=logging.DEBUG)
-scheduler.start()
-# scheduler.print_jobs()
+schedule_logger.info("check_logger_schedule_logger1")
 
+scheduler = None  # Переменная для scheduler
+
+def initialize_scheduler():
+    schedule_logger.info("check_logger_schedule_logger2")
+
+    global scheduler
+    if scheduler is None:
+        schedule_logger.info("Инициализация scheduler...")
+        scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+        scheduler.start()
+        schedule_logger.info("Scheduler успешно запущен!")
 
 async def import_scheduler_tasks():
     '''
@@ -28,12 +38,10 @@ async def import_scheduler_tasks():
 
     scheduler.print_jobs()
 
-
 async def add_schedule_task(tg_id, hour, minute):
     '''
     :tg_id: id пользователя для рассылки.
-    :hour: Выбранный час.
-    :minute: Выбранные минуты в часе.
+    :hour, minute: Выбранное время.
 
     Функция для добавления в рассылку пользователя по выбранному им времени.
     '''
@@ -43,10 +51,12 @@ async def add_schedule_task(tg_id, hour, minute):
         trigger='cron',
         hour=hour,
         minute=minute,
-        day_of_week='mon-fri', start_date=datetime.datetime.today()-datetime.timedelta(days=1),
+        day_of_week='mon-fri', 
+        start_date=datetime.datetime.today()-datetime.timedelta(days=1),
         id=job_id,
         kwargs={"tg_id": tg_id}
     )
+    schedule_logger.info(f"Добавлена новая job для пользователя {tg_id}")
 
 
 async def remove_schedule_task(tg_id):
