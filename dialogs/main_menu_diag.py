@@ -19,8 +19,9 @@ from aiogram_dialog.api.entities.modes import ShowMode
 from dialogs.payment_diag import PaymentMenu
 from dialogs.tp_diag import TPBot
 from database import requests as rq
-from text import quest_1
+
 from utils.scheduler_func import update_schedule_task
+from utils import mailing
 
 
 async def get_id(dialog_manager: DialogManager, **kwargs):
@@ -56,7 +57,7 @@ def may_send_answer(data: Dict, widget: Whenable, manager: DialogManager):
 
 async def done_main(callback, button: Button,
                     dialog_manager: DialogManager):
-    '''Завершает диалог, чтобы пользователь смог отправить ответ на задание через diferent_hand.'''
+    '''Завершает диалог, чтобы пользователь смог отправить ответ на задание через diff_hand.'''
     await callback.message.delete()
     await callback.message.answer(text="Сейчас вы сможете отправить свой ответ на задание. Для возврата в главное меню ипользуйте команду /menu")
     await dialog_manager.done()
@@ -114,31 +115,37 @@ async def start_change_time(callback, button: Button, dialog_manager):
     '''Открывает окно изменения времени.'''
     await dialog_manager.switch_to(MainMenu.CHANGE_TIME)
 
+async def testing_add_day(callback, button: Button, dialog_manager: DialogManager):
+    '''Функция для ручного добавления дня курса в БД и моментальной отсылки задания'''
+    #print(dialog_manager.dialog_data["user_id"])
+    user_id = dialog_manager.dialog_data["user_id"]
+    #await rq.add_day(user_id)
+    await mailing.mailing(user_id)
 
-async def test_text(callback, button: Button, dialog_manager: DialogManager):
-    keyboard5 = InlineKeyboardBuilder()
-    keyboard5.row(types.InlineKeyboardButton(
-        text="Читать задание",
-        url=quest_1[4]["url"])
-    )
-    await callback.message.answer_photo(
-        FSInputFile(
-            path=f"D:\\code\\podsobka\\utils\\tmp\\{quest_1[4]["photo"]}"),
-        caption=quest_1[4]["text"],
-        reply_markup=keyboard5.as_markup()
-    )
-    keyboard6 = InlineKeyboardBuilder()
-    keyboard6.row(types.InlineKeyboardButton(
-        text="Читать задание",
-        url=quest_1[5]["url"])
-    )
-    await callback.message.answer_photo(
-        FSInputFile(
-            path=f"D:\\code\\podsobka\\utils\\tmp\\{quest_1[5]["photo"]}"),
-        caption=quest_1[5]["text"],
-        reply_markup=keyboard6.as_markup()
-    )
-    return
+# async def test_text(callback, button: Button, dialog_manager: DialogManager):
+#     keyboard5 = InlineKeyboardBuilder()
+#     keyboard5.row(types.InlineKeyboardButton(
+#         text="Читать задание",
+#         url=quest_1[4]["url"])
+#     )
+#     await callback.message.answer_photo(
+#         FSInputFile(
+#             path=f"D:\\code\\podsobka\\utils\\tmp\\{quest_1[4]["photo"]}"),
+#         caption=quest_1[4]["text"],
+#         reply_markup=keyboard5.as_markup()
+#     )
+#     keyboard6 = InlineKeyboardBuilder()
+#     keyboard6.row(types.InlineKeyboardButton(
+#         text="Читать задание",
+#         url=quest_1[5]["url"])
+#     )
+#     await callback.message.answer_photo(
+#         FSInputFile(
+#             path=f"D:\\code\\podsobka\\utils\\tmp\\{quest_1[5]["photo"]}"),
+#         caption=quest_1[5]["text"],
+#         reply_markup=keyboard6.as_markup()
+#     )
+#     return
 
 
 class MainMenu(StatesGroup):
@@ -171,7 +178,8 @@ main_menu = Dialog(
         ),
         Row(
             Button(Const("test text"),
-                   id="test_text", on_click=test_text)
+            id="test_text", 
+            on_click=testing_add_day)
         ),
         getter=get_id,
         state=MainMenu.START

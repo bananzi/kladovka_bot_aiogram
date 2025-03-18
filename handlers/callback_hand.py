@@ -1,6 +1,6 @@
 # импорты локальных файлов
 from config_reader import config
-from text import quests
+#from text import quest_0
 from keyboards import start_keyb, return_keyb
 # Импорты необходимых библиотек
 import asyncio
@@ -23,7 +23,7 @@ async def callback_start(
         await callback.message.answer(text="Тут будет информация о переходе в бота поддержки", reply_markup=returnButton)
     else:
         await callback.message.answer(text="Предлагаем вам ознакомиться с примером задания, которое вы получите на курсе")
-        await callback.message.answer(text=quests[0], reply_markup=returnButton)
+        #await callback.message.answer(text=quest_0[0], reply_markup=returnButton)
     await callback.answer()
 
 

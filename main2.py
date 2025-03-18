@@ -43,14 +43,14 @@ async def pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
 
 async def process_successful_payment(message: Message, dialog_manager: DialogManager):
     '''
-    Процесс после оплаты. Мы заносим в БД купленный пользователем курс.\n
+    Процесс после оплаты. Мы заносим в БД купленный пользователем номер курса.\n
     И даём ему выбрать время в окне PaymentMenu.SELECT_TIME
     '''
-    course_id = int(message.successful_payment.invoice_payload)
+    course_id, course_lenght = map(int, message.successful_payment.invoice_payload.split("_"))
     user_id = message.from_user.id
 
     # Записываем оплату
-    await rq.set_payment(tg_id=user_id, course_id=course_id, duration_days_pay=7)
+    await rq.set_payment(tg_id=user_id, course_id=course_id, duration_days_pay=course_lenght)
     await message.answer(f"Оплата прошла успешно! Вы приобрели курс {course_id}.")
 
     # Переключаем пользователя в окно выбора времени

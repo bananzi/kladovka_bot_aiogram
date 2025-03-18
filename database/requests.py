@@ -258,6 +258,24 @@ async def what_day_user(tg_id):
     finally:
         await session.close()  # Закрываем сессию
 
+async def what_course(tg_id):
+    '''
+    :tg_id: id проверяемого пользователя
+
+    Возвращает номер курса (course_id), на котором находится пользователь.
+    '''
+    try:
+        async with async_session() as session:
+            db_current_user = await session.scalars(select(Course).where(Course.tg_id == tg_id))
+            for i in db_current_user:
+                course_id = int(i.course_id)
+            return course_id
+    except Exception as e:
+        await session.rollback()  # Откатываем сессию при ошибке
+        raise e  # Поднимаем исключение дальше
+    finally:
+        await session.close()  # Закрываем сессию
+
 async def get_schedules_list():
     '''
     Возвращает список записанных времени рассылок в БД.

@@ -55,6 +55,7 @@ async def process_payment(callback, button: Button,
     '''
     user_id = dialog_manager.dialog_data['user_id']
     course_id = dialog_manager.dialog_data.get("course_id")
+    course_lenght = dialog_manager.dialog_data.get("course_lenght")
 
     if not course_id:
         await callback.message.answer("Ошибка: курс не выбран!")
@@ -68,7 +69,7 @@ async def process_payment(callback, button: Button,
         chat_id=callback.message.chat.id,
         title="Оплата курса",
         description="Подписка на курс",
-        payload=str(course_id),  # ID курса передаётся в payload
+        payload=(str(course_id)+"_"+str(course_lenght)),  # ID курса передаётся в payload
         provider_token=config.payment_token.get_secret_value(),
         currency="RUB",
         prices=[PRICE_LIST[course_id]],
@@ -116,24 +117,31 @@ async def process_selecting_time(message: Message,
 async def wind_one(callback, button: Button,
                    dialog_manager: DialogManager):
     dialog_manager.dialog_data['course_id'] = 1
+    dialog_manager.dialog_data['course_lenght'] = 7
     await dialog_manager.switch_to(PaymentMenu.FIRST_COURSE)
 
 
 async def wind_two(callback, button: Button,
                    dialog_manager: DialogManager):
     dialog_manager.dialog_data['course_id'] = 2
+    dialog_manager.dialog_data['course_lenght'] = 7
+
     await dialog_manager.switch_to(PaymentMenu.SECOND_COURSE)
 
 
 async def wind_three(callback, button: Button,
                      dialog_manager: DialogManager):
     dialog_manager.dialog_data['course_id'] = 3
+    dialog_manager.dialog_data['course_lenght'] = 7
+
     await dialog_manager.switch_to(PaymentMenu.THIRD_COURSE)
 
 
 async def wind_blank(callback, button: Button,
                      dialog_manager: DialogManager):
     dialog_manager.dialog_data['course_id'] = 4
+    dialog_manager.dialog_data['course_lenght'] = 7  
+
     await dialog_manager.switch_to(PaymentMenu.BLANK_COURSE)
 
 
