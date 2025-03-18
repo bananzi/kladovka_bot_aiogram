@@ -8,16 +8,19 @@ from aiogram import Bot, Dispatcher
 from aiogram import F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramNetworkError
 from aiogram.filters import ExceptionTypeFilter
 from aiogram.types import PreCheckoutQuery, Message, ContentType
 from aiogram_dialog import DialogManager, StartMode
 from aiogram_dialog.api.exceptions import UnknownIntent
 
 # импорты локальных файлов
+
 from database import models
 from database import requests as rq
 from dialogs.payment_diag import PaymentMenu
 from init_routers import initialise
+from utils.scheduler_func import initialize_scheduler, import_scheduler_tasks
 from utils.mailing import mailing, mail_sertain_text
 # импорт конфига
 from config_reader import config
@@ -46,7 +49,8 @@ async def process_successful_payment(message: Message, dialog_manager: DialogMan
     Процесс после оплаты. Мы заносим в БД купленный пользователем номер курса.\n
     И даём ему выбрать время в окне PaymentMenu.SELECT_TIME
     '''
-    course_id, course_lenght = map(int, message.successful_payment.invoice_payload.split("_"))
+    course_id, course_lenght = map(
+        int, message.successful_payment.invoice_payload.split("_"))
     user_id = message.from_user.id
 
     # Записываем оплату
@@ -71,12 +75,16 @@ async def main():
     # Диспетчер
     dp = Dispatcher()
 
-    await scheduler_func.import_scheduler_tasks()
+    initialize_scheduler()
+    logging.info("Импорт задач в scheduler...")
+    await import_scheduler_tasks()
+    logging.info("Импорт завершён!")
 
     initialise(dp)
     dp.pre_checkout_query.register(
         pre_checkout_query)  # Регистрируем обработчик получаения оплаты
-    dp.message.register(process_successful_payment, F.content_type == ContentType.SUCCESSFUL_PAYMENT)  # Регистрируем обработчик успешной оплаты
+    dp.message.register(process_successful_payment, F.content_type ==
+                        ContentType.SUCCESSFUL_PAYMENT)  # Регистрируем обработчик успешной оплаты
 
     dp.errors.register(
         on_unknown_intent,
@@ -85,10 +93,33 @@ async def main():
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
+# Константы для авто-перезапуска
+MAX_RETRIES = 5  # Максимальное количество попыток перезапуска
+RETRY_DELAY = 5  # Задержка перед повторным запуском (в секундах)
+
+
+async def run_bot():
+    '''
+    Запускает бота с автоматическим перезапуском при потере соединения.
+    '''
+    retries = 0
+    while retries < MAX_RETRIES:
+        try:
+            await main()  # Запуск основной логики бота
+        except TelegramNetworkError as e:
+            retries += 1
+            logging.error(
+                f"Ошибка сети: {e}. Попытка {retries}/{MAX_RETRIES}. Перезапуск через {RETRY_DELAY} секунд...")
+            # Ожидание перед повторным запуском
+            await asyncio.sleep(RETRY_DELAY)
+        except Exception as e:
+            logging.error(f"Неизвестная ошибка: {e}. Бот остановлен.")
+            break  # Остановить бота при критической ошибке
+
+    logging.error("Превышено количество попыток перезапуска. Остановка бота.")
 
 if __name__ == "__main__":
     # Включаем логирование, чтобы не пропустить важные сообщения
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
-    from utils import scheduler_func
-    asyncio.run(main())
+    asyncio.run(run_bot())
