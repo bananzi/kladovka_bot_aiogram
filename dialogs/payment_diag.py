@@ -107,7 +107,7 @@ async def process_selecting_time(message: Message,
         return
     user_id = message.from_user.id
     await rq.set_time_mailing(tg_id=user_id, selected_time_hour=user_input[0], selected_time_minute=user_input[1])
-    await scheduler_func.update_schedule_task(tg_id=user_id, new_hour=int(user_input[0]), new_minute=int(user_input[1]))
+    await scheduler_func.update_schedule_task(tg_id=user_id, new_hour=int(user_input[0]), new_minute=int(user_input[1]), perenos=0, day=0)
     #await scheduler_func.add_schedule_task(tg_id=user_id, hour=int(user_input[0]), minute=int(user_input[1]))
     await mailing.mail_sertain_text(tg_id=user_id, text='Твоё время сохранено. Чтобы вернуться в главное меню отправьте команду /menu')
     await dialog_manager.reset_stack()
