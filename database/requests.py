@@ -287,7 +287,7 @@ async def get_schedules_list():
             list_current_job = []
             db_list_jobs = await session.scalars(select(TimeMailing))
             for user in db_list_jobs:
-                list_current_job.append((user.tg_id, user.time_hour, user.time_minute))
+                list_current_job.append((user.tg_id, user.time_hour, user.time_minute, user.stop_until))
             return list_current_job
     except Exception as e:
         await session.rollback()  # Откатываем сессию при ошибке
@@ -295,7 +295,7 @@ async def get_schedules_list():
     finally:
         await session.close()  # Закрываем сессию
 
-async def update_user_schedule(tg_id, new_hour, new_minute):
+async def update_user_schedule(tg_id, new_hour, new_minute, day):
     '''
     :tg_id: id пользователя, которому нужно изменить время в БД
     :`new_hour, new_minute`: Новое время
@@ -308,6 +308,7 @@ async def update_user_schedule(tg_id, new_hour, new_minute):
             if user:
                 user.time_hour = new_hour
                 user.time_minute = new_minute
+                user.stop_until = day if day != 0 else None
                 await session.commit()
     except Exception as e:
         await session.rollback()
