@@ -83,8 +83,9 @@ async def main():
     initialise(dp)
     dp.pre_checkout_query.register(
         pre_checkout_query)  # Регистрируем обработчик получаения оплаты
-    dp.message.register(process_successful_payment, F.content_type ==
-                        ContentType.SUCCESSFUL_PAYMENT)  # Регистрируем обработчик успешной оплаты
+    dp.message.register(process_successful_payment,
+                        # Регистрируем обработчик успешной оплаты
+                        F.content_type == ContentType.SUCCESSFUL_PAYMENT)
 
     dp.errors.register(
         on_unknown_intent,
