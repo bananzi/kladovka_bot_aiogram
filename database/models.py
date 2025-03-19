@@ -47,6 +47,7 @@ class TimeMailing(Base):
     tg_id = mapped_column(BigInteger)
     time_hour = mapped_column(Integer)
     time_minute = mapped_column(Integer)
+    stop_until = mapped_column(String(20), default=None)
 
 
 async def async_main():
