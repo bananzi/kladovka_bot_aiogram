@@ -61,7 +61,7 @@ async def set_payment(tg_id,course_id, duration_days_pay):
                     payment_period=duration_days_pay,
                     start_period=datetime.date.today() + datetime.timedelta(days=1),
                     end_period=datetime.date.today() + datetime.timedelta(days=duration_days_pay),
-                    day_number=0
+                    day_number=1
                 ))
                 await session.commit()
     except Exception as e:
@@ -258,7 +258,7 @@ async def what_day_user(tg_id):
     finally:
         await session.close()  # Закрываем сессию
 
-async def what_course(tg_id):
+async def info_user_in_course(tg_id):
     '''
     :tg_id: id проверяемого пользователя
 

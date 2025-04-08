@@ -96,7 +96,7 @@ async def mailing(tg_id):
 
     current_day = await rq.what_day_user(tg_id)
     really_end = await rq.it_user_end(tg_id)
-    quest = all_quests[f"quest_{await rq.what_course(tg_id)}"]
+    quest = all_quests[f"quest_{await rq.info_user_in_course(tg_id)}"]
 
     has_photo = True if quest[current_day]["photo"] != 0 else False
     has_url = True if quest[current_day]["url"] != 0 else False

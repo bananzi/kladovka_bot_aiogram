@@ -17,7 +17,7 @@ list_course = {1: "Как вдохновляться чужим?",
                3: "3 Курс",
                4: "... Курс"}
 PRICE_LIST = {
-    1: LabeledPrice(label="1 Курс", amount=500_00),  # 500 RUB
+    1: LabeledPrice(label="1 Курс", amount=390_00),  # 500 RUB
     2: LabeledPrice(label="2 Курс", amount=1500_00),  # 1500 RUB
     3: LabeledPrice(label="3 Курс", amount=2500_00)   # 2500 RUB
 }
@@ -69,7 +69,8 @@ async def process_payment(callback, button: Button,
         chat_id=callback.message.chat.id,
         title="Оплата курса",
         description="Подписка на курс",
-        payload=(str(course_id)+"_"+str(course_lenght)),  # ID курса передаётся в payload
+        # ID курса передаётся в payload
+        payload=(str(course_id)+"_"+str(course_lenght)),
         provider_token=config.payment_token.get_secret_value(),
         currency="RUB",
         prices=[PRICE_LIST[course_id]],
@@ -108,7 +109,7 @@ async def process_selecting_time(message: Message,
     user_id = message.from_user.id
     await rq.set_time_mailing(tg_id=user_id, selected_time_hour=user_input[0], selected_time_minute=user_input[1])
     await scheduler_func.update_schedule_task(tg_id=user_id, new_hour=int(user_input[0]), new_minute=int(user_input[1]), perenos=0, day=0)
-    #await scheduler_func.add_schedule_task(tg_id=user_id, hour=int(user_input[0]), minute=int(user_input[1]))
+    # await scheduler_func.add_schedule_task(tg_id=user_id, hour=int(user_input[0]), minute=int(user_input[1]))
     await mailing.mail_sertain_text(tg_id=user_id, text='Твоё время сохранено. Чтобы вернуться в главное меню отправьте команду /menu')
     await dialog_manager.reset_stack()
 
@@ -140,7 +141,7 @@ async def wind_three(callback, button: Button,
 async def wind_blank(callback, button: Button,
                      dialog_manager: DialogManager):
     dialog_manager.dialog_data['course_id'] = 4
-    dialog_manager.dialog_data['course_lenght'] = 7  
+    dialog_manager.dialog_data['course_lenght'] = 7
 
     await dialog_manager.switch_to(PaymentMenu.BLANK_COURSE)
 
@@ -179,7 +180,7 @@ payment_menu = Dialog(
     ),
     Window(
         Const(
-            "Ты выбрал курс *Номер 1*. Здесь ты будешь ежедневно в выбранное тобой время получать задания на тему *Тема 1*."
+            "Ты выбрал курс «Как вдохновляться чужим?». Здесь ты будешь ежедневно в выбранное тобой время получать задания."
         ),
         Row(
             Button(Const("Оплатить"), id="payone", on_click=pre_pay),
