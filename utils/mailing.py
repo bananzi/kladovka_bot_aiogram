@@ -9,6 +9,7 @@ from pathlib import Path
 from database import requests as rq
 from text import all_quests
 from config_reader import config
+from utils import scheduler_func
 
 
 global bot
@@ -112,8 +113,12 @@ async def mailing(tg_id):
         await rq.add_day(tg_id)
     elif quest == "quest_0":
         await end_mailing_probn(tg_id)
+        await scheduler_func.remove_schedule_task(tg_id)
+        await rq.remove_user_schedule(tg_id)
     else:
         await end_mailing(tg_id)
+        await scheduler_func.remove_schedule_task(tg_id)
+        await rq.remove_user_schedule(tg_id)
 
 
 async def end_mailing_probn(tg_id):
@@ -127,4 +132,5 @@ async def end_mailing(tg_id):
     '''
     Отправка пользователю оповещения, что его курс завершён (Кроме пробного).
     '''
+    
     await mail_sertain_text(tg_id=tg_id, text="Это было последнее задание. Если тебе понравилось, то можешь выбрать другой курс из представленных в нашем боте. Будем рады и дальше помогать тебе.")

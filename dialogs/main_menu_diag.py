@@ -94,22 +94,18 @@ async def process_new_time(message: Message,
     new_hour, new_minute = map(int, new_time.split(":"))
     perenos = int(dialog_manager.dialog_data["switch_time"])
     tg_id = message.from_user.id  # ID пользователя
-    print(f"kek_process_new_time_1. perenos = {perenos}")
 
     # Обновляем расписание
     if perenos != 2:
-        print("kek_process_new_time_2")
-
+        
         await update_schedule_task(tg_id, new_hour, new_minute, perenos, 0)
     else:
-        print("kek_process_new_time_3")
 
         dialog_manager.dialog_data["new_hour"] = new_hour
         dialog_manager.dialog_data["new_minute"] = new_minute
         await dialog_manager.switch_to(MainMenu.CHANGE_DAY)
         return
     await message.answer(f"Время рассылки изменено на {new_hour}:{new_minute}. ")
-    print("kek_process_new_time_4")
 
     # Возвращаем пользователя в меню
     await dialog_manager.switch_to(MainMenu.START)
@@ -118,7 +114,6 @@ async def process_new_time_and_day(message: Message,
                            message_input: MessageInput,
                            dialog_manager: DialogManager,):
     new_day = message.text.strip()
-    print("kek_process_new_day_1")
     if not re.match(r"^(0[1-9]|[12]\d|3[01])-(0[1-9]|1[0-2])-\d{4}$", new_day):
         await message.answer("Некорректный формат даты. Введи в формате ДД-ММ-ГГГГ (например, 05-07-2004).")
         return
@@ -162,31 +157,6 @@ async def testing_add_day(callback, button: Button, dialog_manager: DialogManage
     # await rq.add_day(user_id)
     await mailing.mailing(user_id)
 
-# async def test_text(callback, button: Button, dialog_manager: DialogManager):
-#     keyboard5 = InlineKeyboardBuilder()
-#     keyboard5.row(types.InlineKeyboardButton(
-#         text="Читать задание",
-#         url=quest_1[4]["url"])
-#     )
-#     await callback.message.answer_photo(
-#         FSInputFile(
-#             path=f"D:\\code\\podsobka\\utils\\tmp\\{quest_1[4]["photo"]}"),
-#         caption=quest_1[4]["text"],
-#         reply_markup=keyboard5.as_markup()
-#     )
-#     keyboard6 = InlineKeyboardBuilder()
-#     keyboard6.row(types.InlineKeyboardButton(
-#         text="Читать задание",
-#         url=quest_1[5]["url"])
-#     )
-#     await callback.message.answer_photo(
-#         FSInputFile(
-#             path=f"D:\\code\\podsobka\\utils\\tmp\\{quest_1[5]["photo"]}"),
-#         caption=quest_1[5]["text"],
-#         reply_markup=keyboard6.as_markup()
-#     )
-#     return
-
 
 class MainMenu(StatesGroup):
     START = State()
@@ -228,7 +198,7 @@ main_menu = Dialog(
     ),
     Window(
         StaticMedia(
-            path="D:\\code\\podsobka\\utils\\tmp\\Пробный период.png"
+            path="D:\\code\\podsobka\\utils\\tmp\\Обложка 0_0.png"
         ),
         Const("Пробный период длится 3 дня. Выбери время, в которое тебе будет удобно получать задания⏰. Помни, что задание можно выполнить только до 23.59 того дня, в которое ты его получил.\nДавай начнем!"),
         Button(Const("Начнём!"), id="trial", on_click=sub_set_payment),

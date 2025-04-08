@@ -64,7 +64,13 @@ async def process_payment(callback, button: Button,
     if await rq.is_user_paid(user_id):
         await callback.message.answer("У тебя уже есть активная подписка!")
         return
+    # Записываем оплату
+    await rq.set_payment(tg_id=user_id, course_id=course_id, duration_days_pay=course_lenght)
+    await callback.answer(f"Оплата прошла успешно! Вы приобрели курс {course_id}.")
 
+    # Переключаем пользователя в окно выбора времени
+    await dialog_manager.start(PaymentMenu.SELECT_TIME, mode=StartMode.RESET_STACK)
+    '''
     await callback.message.bot.send_invoice(
         chat_id=callback.message.chat.id,
         title="Оплата курса",
@@ -77,6 +83,7 @@ async def process_payment(callback, button: Button,
         start_parameter="payment",
         # Можно запрашивать email, если нужно
     )
+    '''
 
 
 async def process_selecting_time(message: Message,

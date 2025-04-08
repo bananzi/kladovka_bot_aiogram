@@ -5,7 +5,7 @@ import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 # импорты локальных файлов
-from utils.mailing import mailing, mail_sertain_text
+from utils import mailing
 from database import requests as rq
 
 
@@ -61,7 +61,7 @@ async def add_schedule_task(tg_id, hour, minute, perenos: int, new_date: str):
 
     job_id = f"job_{tg_id}"
     scheduler.add_job(
-        mailing,
+        mailing.mailing,
         trigger='cron',
         hour=hour,
         minute=minute,
