@@ -5,21 +5,16 @@ from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.api.entities.modes import StartMode, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Row, Cancel
+from aiogram_dialog.widgets.media import StaticMedia
 from aiogram_dialog.widgets.text import Const
-
 
 from database import requests as rq
 from utils import mailing, scheduler_func
-from config_reader import config
+from text import all_quests
 
-list_course = {1: "Как вдохновляться чужим?",
-               2: "2 Курс",
-               3: "3 Курс",
-               4: "... Курс"}
+list_course = {1: "Как вдохновляться чужим?",}
 PRICE_LIST = {
-    1: LabeledPrice(label="1 Курс", amount=390_00),  # 500 RUB
-    2: LabeledPrice(label="2 Курс", amount=1500_00),  # 1500 RUB
-    3: LabeledPrice(label="3 Курс", amount=2500_00)   # 2500 RUB
+    1: LabeledPrice(label="1 Курс", amount=100_00),  # 500 RUB
 }
 
 
@@ -65,25 +60,33 @@ async def process_payment(callback, button: Button,
         await callback.message.answer("У тебя уже есть активная подписка!")
         return
     # Записываем оплату
+
+    # ДЛЯ ОБХОДА ОПЛАТЫ ДЛЯ ТЕСТОВ!!!!!!
+    ###
     await rq.set_payment(tg_id=user_id, course_id=course_id, duration_days_pay=course_lenght)
     await callback.answer(f"Оплата прошла успешно! Вы приобрели курс {course_id}.")
+    await dialog_manager.start(PaymentMenu.SELECT_TIME, mode=StartMode.RESET_STACK)
+    ###
+
 
     # Переключаем пользователя в окно выбора времени
-    await dialog_manager.start(PaymentMenu.SELECT_TIME, mode=StartMode.RESET_STACK)
-    '''
-    await callback.message.bot.send_invoice(
-        chat_id=callback.message.chat.id,
-        title="Оплата курса",
-        description="Подписка на курс",
-        # ID курса передаётся в payload
-        payload=(str(course_id)+"_"+str(course_lenght)),
-        provider_token=config.payment_token.get_secret_value(),
-        currency="RUB",
-        prices=[PRICE_LIST[course_id]],
-        start_parameter="payment",
-        # Можно запрашивать email, если нужно
-    )
-    '''
+
+    # await callback.message.bot.send_invoice(
+    #     chat_id=callback.message.chat.id,
+    #     title="Оплата курса",
+    #     description="Подписка на курс",
+    #     # ID курса передаётся в payload
+    #     payload=(str(course_id)+"_"+str(course_lenght)),
+    #     provider_token=config.payment_token.get_secret_value(),
+    #     currency="RUB",
+    #     prices=[PRICE_LIST[course_id]],
+    #     start_parameter="payment",
+    #     # Можно запрашивать email, если нужно
+    # )
+
+
+async def is_recieved_today():
+    ...
 
 
 async def process_selecting_time(message: Message,
@@ -121,34 +124,24 @@ async def process_selecting_time(message: Message,
     await dialog_manager.reset_stack()
 
 
-# Переделать логику оплаты, с учётом, что теперь у нас не периоды, а конкретные курсы
+async def wind_zero(callback, button: Button, dialog_manager: DialogManager):
+    await dialog_manager.switch_to(PaymentMenu.START)
+
+
 async def wind_one(callback, button: Button,
                    dialog_manager: DialogManager):
     dialog_manager.dialog_data['course_id'] = 1
     dialog_manager.dialog_data['course_lenght'] = 7
     await dialog_manager.switch_to(PaymentMenu.FIRST_COURSE)
 
-
-async def wind_two(callback, button: Button,
-                   dialog_manager: DialogManager):
-    dialog_manager.dialog_data['course_id'] = 2
-    dialog_manager.dialog_data['course_lenght'] = 7
-
-    await dialog_manager.switch_to(PaymentMenu.SECOND_COURSE)
-
-
-async def wind_three(callback, button: Button,
-                     dialog_manager: DialogManager):
-    dialog_manager.dialog_data['course_id'] = 3
-    dialog_manager.dialog_data['course_lenght'] = 7
-
-    await dialog_manager.switch_to(PaymentMenu.THIRD_COURSE)
+async def wind_about_one(callback, button: Button, dialog_manager: DialogManager):
+    await dialog_manager.switch_to(PaymentMenu.ABOUT_FIRST)
 
 
 async def wind_blank(callback, button: Button,
                      dialog_manager: DialogManager):
-    dialog_manager.dialog_data['course_id'] = 4
-    dialog_manager.dialog_data['course_lenght'] = 7
+    dialog_manager.dialog_data['course_id'] = 0
+    dialog_manager.dialog_data['course_lenght'] = 0
 
     await dialog_manager.switch_to(PaymentMenu.BLANK_COURSE)
 
@@ -156,8 +149,7 @@ async def wind_blank(callback, button: Button,
 class PaymentMenu(StatesGroup):
     START = State()
     FIRST_COURSE = State()
-    SECOND_COURSE = State()
-    THIRD_COURSE = State()
+    ABOUT_FIRST = State()
     BLANK_COURSE = State()
     SELECT_TIME = State()
 
@@ -165,19 +157,15 @@ class PaymentMenu(StatesGroup):
 payment_menu = Dialog(
     Window(
         Const("У нас есть выбор из этих курсов: \n"),
-        Const(f"{',\n'.join(list_course.values())}"),
+        Const(f"{',\n'.join(f"«{item}»" for item in list_course.values())}\n"),
         Const(
             "Более подробное описание того, что ты получишь на каждом из курсов, ты сможешь увидеть, перейдя по одной из кнопок:"
         ),
 
         Button(Const(f"{list_course[1]}"), id="first_couse",
                on_click=wind_one),
-        Button(Const(f"{list_course[2]}"), id="second_couse",
-               on_click=wind_two),
-        Button(Const(f"{list_course[3]}"), id="third_couse",
-               on_click=wind_three),
-        Button(Const(f"{list_course[4]}"), id="blank_couse",
-               on_click=wind_blank),
+        # Button(Const(f"{list_course[4]}"), id="blank_couse",
+        #        on_click=wind_blank),
         Row(
             Cancel(Const("Вернуться в главное меню"))
         ),
@@ -186,52 +174,42 @@ payment_menu = Dialog(
         state=PaymentMenu.START
     ),
     Window(
+        StaticMedia(path="utils/tmp/Обложка 1_0.jpg"),
         Const(
             "Ты выбрал курс «Как вдохновляться чужим?». Здесь ты будешь ежедневно в выбранное тобой время получать задания."
         ),
         Row(
+            Button(Const(text="Описание курса"), id="about_one", on_click=wind_about_one)
+        ),
+        Row(
             Button(Const("Оплатить"), id="payone", on_click=pre_pay),
         ),
         Row(
-            Cancel(Const("Вернуться к выбору тарифа"))
+            Button(Const("Вернуться к выбору тарифа"),
+                   id="payzero", on_click=wind_zero)
         ),
         state=PaymentMenu.FIRST_COURSE
     ),
     Window(
-        Const(
-            "Ты выбрал курс *Номер 2*. Здесь ты будешь ежедневно в выбранное тобой время получать задания на тему *Тема 2*."
-        ),
+        StaticMedia(path="utils/tmp/Обложка 1_0.jpg"),
+        Const(text=str(all_quests["quest_1"][0]["text"])),
         Row(
-            Button(Const("Запишите меня"), id="paytwo", on_click=pre_pay),
-        ),
-        Row(
-            Cancel(Const("Вернуться к выбору тарифа"))
-        ),
-        state=PaymentMenu.SECOND_COURSE
+            Button(Const("Вернуться в меню курса"), id="cancel_about_one", on_click=wind_one)
+            ),
+        state=PaymentMenu.ABOUT_FIRST
     ),
-    Window(
-        Const(
-            "Ты выбрал курс *Номер 3*. Здесь ты будешь ежедневно в выбранное тобой время получать задания на тему *Тема 3*."
-        ),
-        Row(
-            Button(Const("Запишите меня"), id="paythree", on_click=pre_pay),
-        ),
-        Row(
-            Cancel(Const("Вернуться к выбору тарифа"))
-        ),
-        state=PaymentMenu.THIRD_COURSE
-    ), Window(
-        Const(
-            "Ты выбрал курс ... . Здесь ты будешь ежедневно в выбранное тобой время получать задания на тему ... ."
-        ),
-        Row(
-            Button(Const("Оплатить"), id="payone", on_click=pre_pay),
-        ),
-        Row(
-            Cancel(Const("Вернуться к выбору тарифа"))
-        ),
-        state=PaymentMenu.BLANK_COURSE
-    ),
+    # Window(
+    #     Const(
+    #         "Ты выбрал курс ... . Здесь ты будешь ежедневно в выбранное тобой время получать задания на тему ... ."
+    #     ),
+    #     Row(
+    #         Button(Const("Оплатить"), id="payone", on_click=pre_pay),
+    #     ),
+    #     Row(
+    #         Cancel(Const("Вернуться к выбору тарифа"))
+    #     ),
+    #     state=PaymentMenu.BLANK_COURSE
+    # ),
     Window(
         Const("Выбери время, в которое тебе будет удобно получать задания⏰. \nПомни, что задание можно выполнить только до 23.59 того дня, в которое ты его получил.\n\n Для этого напиши время в формате «час:минуты» (Например 22:15), в которое ты хочешь, чтобы приходили задания"),
         MessageInput(process_selecting_time),
