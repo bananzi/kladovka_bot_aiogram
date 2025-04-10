@@ -55,7 +55,9 @@ async def set_payment(tg_id, course_id, duration_days_pay):
                 (Course.tg_id == tg_id) & (Course.course_id == course_id)
             ))
             if not already_pay:
-
+                await session.execute(
+                    delete(Course).where(Course.tg_id == tg_id)
+                )
                 session.add(Course(
                     tg_id=tg_id,
                     is_paid=True,
@@ -63,7 +65,8 @@ async def set_payment(tg_id, course_id, duration_days_pay):
                     payment_period=duration_days_pay,
                     start_period=datetime.date.today() + datetime.timedelta(days=1),
                     end_period=datetime.date.today() + datetime.timedelta(days=duration_days_pay),
-                    day_number=1
+                    day_number=1,
+                    total_completed=0
                 ))
                 await session.commit()
     except Exception as e:
@@ -199,9 +202,18 @@ async def update_payments():
         async with async_session() as session:
            # users = await get_all_paid_users()
             # now_date = datetime.date.today()
-            update_query = update(Course).where(Course.payment_period < Course.day_number).values(
+            update_paid = update(Course).where(Course.payment_period < Course.day_number).values(
                 {"is_paid": False})
-            await session.execute(update_query)
+            await session.execute(update_paid)
+
+            update_recieved = update(Course).values(
+                {
+                "already_received": False,
+                "already_completed": False
+                }
+            )
+            await session.execute(update_recieved)
+
             await session.commit()
     except Exception as e:
         await session.rollback()  # Откатываем сессию при ошибке
@@ -344,6 +356,64 @@ async def remove_user_schedule(tg_id):
                     delete(TimeMailing).where(TimeMailing.tg_id == tg_id)
                 )
                 await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+
+async def set_already_received(tg_id):
+    '''
+    :tg_id: id пользователя, которому нужно поставить флаг, что он сегодня уже получил задание.
+
+    Функция ставит флаг already_recieved на `True` для пользователя в `Course`
+    '''
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(Course).where(Course.tg_id == tg_id))
+            if user:
+                user.already_received = True
+                await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+async def is_already_recieved(tg_id):
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(Course).where(Course.tg_id == tg_id))
+            if user:
+                return user.already_received
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+async def set_already_completed(tg_id):
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(Course).where(Course.tg_id == tg_id))
+            if user:
+                user.already_completed = True
+                await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+async def add_total_completed(tg_id):
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(Course).where(Course.tg_id == tg_id))
+            if user:
+                if not(user.already_completed):
+                    user.total_completed += 1
+                    await session.commit()
     except Exception as e:
         await session.rollback()
         raise e
