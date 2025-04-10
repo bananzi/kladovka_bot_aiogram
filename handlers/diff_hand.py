@@ -1,6 +1,7 @@
 # импорты локальных файлов
 from filters.user_filters import UserInCourse
 from filters.admin_filt import ItsAdmin
+from database.requests import set_already_completed, add_total_completed
 # Импорты необходимых библиотек
 from aiogram import Bot, F, Router
 from aiogram.types import Message
@@ -34,6 +35,8 @@ async def download_photo(message: Message, bot: Bot, user_id: int):
             destination=f"{download_path}\\{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.jpg"
         )
         await bot.send_message(chat_id=user_id, text=dowload_anwers["ok"])
+        await add_total_completed(user_id)
+        await set_already_completed(user_id)
     except Exception as e:
         await bot.send_message(chat_id=user_id, text=dowload_anwers["error"])
         print(f"{user_id} получил ошибку <<{e}>> при загрузке фото")
@@ -46,6 +49,8 @@ async def download_text(message: Message, bot: Bot, user_id: int):
         with open(f"{download_path}\\{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.txt", "w") as file:
             file.write(message.text)
         await bot.send_message(chat_id=user_id, text=dowload_anwers['ok'])
+        await add_total_completed(user_id)
+        await set_already_completed(user_id)
     except Exception as e:
         await bot.send_message(chat_id=user_id, text=dowload_anwers['error'])
         print(f"{user_id} получил ошибку <<{e}>> при загрузке текста")
@@ -59,6 +64,8 @@ async def download_video(message: Message, bot: Bot, user_id: int):
         file = await bot.get_file(file_id) 
         await bot.download_file(file.file_path, f"{download_path}\\{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.mp4")
         await bot.send_message(chat_id=user_id, text=dowload_anwers['ok'])
+        await add_total_completed(user_id)
+        await set_already_completed(user_id)
     except Exception as e:
         await bot.send_message(chat_id=user_id, text=dowload_anwers['error'])
         print(f"{user_id} получил ошибку <<{e}>> при загрузке видео")
