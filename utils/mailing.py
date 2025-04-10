@@ -107,9 +107,8 @@ async def mailing(tg_id):
             await mail_and_text_photo_url(tg_id=tg_id, quest=quest, current_day=current_day)
         if not (has_photo and has_url):
             await mail_sertain_text(tg_id=tg_id, text="Если увидели это, напишите @Bananzi")
-
-        # await bot.close()  XX
-        await rq.update_payments()
+        await rq.set_already_received(tg_id)
+        
         await rq.add_day(tg_id)
     elif quest == "quest_0":
         await end_mailing_probn(tg_id)
