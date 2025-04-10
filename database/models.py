@@ -22,8 +22,8 @@ class Course(Base):
     __tablename__ = 'courses'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tg_id = mapped_column(BigInteger, ForeignKey("users.tg_id"))  # Связь с пользователем
-    course_id: Mapped[int] = mapped_column()  # Новый параметр: ID курса
+    tg_id = mapped_column(BigInteger, ForeignKey("users.tg_id"))
+    course_id: Mapped[int] = mapped_column()
     is_paid: Mapped[bool] = mapped_column(insert_default=True)
 
     payment_period: Mapped[int] = mapped_column()
@@ -32,6 +32,10 @@ class Course(Base):
 
     day_number: Mapped[int] = mapped_column()
     already_received: Mapped[bool] = mapped_column(insert_default=False)
+
+    total_completed: Mapped[int] = mapped_column()
+    already_completed: Mapped[bool] = mapped_column(insert_default=False)
+
 
 
 class PrePayment(Base):
