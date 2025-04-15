@@ -1,14 +1,11 @@
-from typing import Any
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters.command import Command
-from aiogram.types import Message
-from aiogram.filters.callback_data import CallbackData
 
-from aiogram_dialog import setup_dialogs, DialogManager
+from aiogram_dialog import DialogManager
 
 from filters.admin_filt import ItsAdmin
-from dialogs import admin_diag, main_menu_diag
+from dialogs import admin_diag
 
 router = Router()
 router.message.filter(ItsAdmin())

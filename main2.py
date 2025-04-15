@@ -1,9 +1,7 @@
 # Импорты библиотек
 import asyncio
 import logging
-import datetime
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram import Bot, Dispatcher
 from aiogram import F
 from aiogram.client.default import DefaultBotProperties
@@ -21,7 +19,7 @@ from database import requests as rq
 from dialogs.payment_diag import PaymentMenu
 from init_routers import initialise
 from utils.scheduler_func import initialize_scheduler, import_scheduler_tasks
-from utils.mailing import mailing, mail_sertain_text
+from utils.mailing import mail_sertain_text
 # импорт конфига
 from config_reader import config
 

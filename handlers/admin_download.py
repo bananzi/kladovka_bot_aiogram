@@ -3,13 +3,12 @@ from filters.admin_filt import ItsAdmin
 from utils import mailing
 # Импорты необходимых библиотек
 import shutil
-from aiogram import Bot, F, Router
-from aiogram.types import Message, FSInputFile
+from aiogram import Router
+from aiogram.types import Message
 from datetime import date
-from aiogram.fsm.state import StatesGroup, State
-from aiogram.fsm.context import FSMContext
+
 from pathlib import Path
-from os import mkdir, path, remove
+from os import mkdir, remove
 
 router = Router()
 router.message.filter(ItsAdmin())

@@ -1,8 +1,5 @@
-# импорты локальных файлов
-from keyboards import start_keyb, return_keyb
-
 # Импорты необходимых библиотек
-from aiogram import F, Router
+from aiogram import Router
 from aiogram.filters.command import Command
 from aiogram.types import Message
 

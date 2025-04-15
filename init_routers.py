@@ -1,14 +1,6 @@
-
-# Импорты библиотек
-import asyncio
-import logging
-
-from aiogram import Bot, Dispatcher
+from aiogram import Dispatcher
 from aiogram_dialog import setup_dialogs
-# импорты локальных файлов
-from database import models, requests
-# импорт конфига
-from config_reader import config
+
 # импорт диалогов
 from dialogs import main_menu_diag, payment_diag, tp_diag, admin_diag, settings_diag
 

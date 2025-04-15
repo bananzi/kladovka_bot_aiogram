@@ -5,7 +5,7 @@ from aiogram.filters.command import Command
 from aiogram.types import FSInputFile, InlineKeyboardButton
 from aiogram.types.callback_query import CallbackQuery 
 from aiogram_dialog import DialogManager
-from aiogram_dialog.api.entities.modes import StartMode, ShowMode
+from aiogram_dialog.api.entities.modes import ShowMode
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 ### импорты локальных файлов
 from text import hello

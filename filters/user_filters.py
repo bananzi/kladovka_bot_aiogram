@@ -2,7 +2,7 @@ from typing import Union, Dict, Any
 from aiogram.filters import BaseFilter
 from aiogram.types import Message
 
-from database import requests as rq
+
 
 class UserInCourse(BaseFilter):
     async def __call__(self, message: Message) -> Union[bool, Dict[str, Any]]:

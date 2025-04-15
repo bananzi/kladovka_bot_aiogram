@@ -1,5 +1,5 @@
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import Message, ContentType, LabeledPrice, PreCheckoutQuery, CallbackQuery
+from aiogram.types import Message, LabeledPrice, CallbackQuery
 
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.api.entities.modes import StartMode, ShowMode
@@ -7,10 +7,10 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Row, Cancel, Checkbox
 
 from aiogram_dialog.widgets.media import StaticMedia
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const
 
 from database import requests as rq
-from utils import mailing, scheduler_func
+from utils import scheduler_func
 from text import all_quests
 
 list_course = {1: "Как вдохновляться чужим?", }

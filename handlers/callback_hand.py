@@ -1,14 +1,8 @@
-# импорты локальных файлов
-from config_reader import config
-#from text import quest_0
 from keyboards import start_keyb, return_keyb
 # Импорты необходимых библиотек
-import asyncio
-import logging
-from aiogram import Bot, Dispatcher, types, F, Router
-from aiogram.filters.command import Command
-from aiogram.types import Message
-from aiogram.filters.callback_data import CallbackData
+from aiogram import types, Router
+
+
 
 router = Router()
 @router.callback_query(start_keyb.StartCallbackFactory.filter())

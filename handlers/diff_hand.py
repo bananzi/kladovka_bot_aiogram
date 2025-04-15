@@ -1,12 +1,10 @@
 # импорты локальных файлов
 from filters.user_filters import UserInCourse
-from filters.admin_filt import ItsAdmin
 from database.requests import set_already_completed, add_total_completed
 # Импорты необходимых библиотек
 from aiogram import Bot, F, Router
 from aiogram.types import Message
 from datetime import datetime
-import time
 from pathlib import Path
 from os import mkdir, path
 

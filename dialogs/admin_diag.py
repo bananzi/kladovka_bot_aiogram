@@ -1,24 +1,18 @@
-
-from os import remove
-from datetime import date
-
 from aiogram.fsm.state import State, StatesGroup
-from typing import Any
-from pathlib import Path
+
 
 
 from aiogram import Bot
-from aiogram_dialog import Dialog, Window, DialogManager, Data
+from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button, Row, Start, Cancel
+from aiogram_dialog.widgets.kbd import Start
 from aiogram_dialog.widgets.text import Const
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import Message
 
 
 # from aiogram.fsm.context import FSMContext
 
 from config_reader import config
-from utils.mailing import mail_sertain_text, mail_file
 from handlers import admin_download
 
 

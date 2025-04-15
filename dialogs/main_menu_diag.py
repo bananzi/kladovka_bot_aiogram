@@ -1,19 +1,11 @@
 from typing import Dict
 
-
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram import types
-
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import Message
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.common import Whenable
-from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Row, Start, Cancel  # noqa: F401
 from aiogram_dialog.widgets.media import StaticMedia
 from aiogram_dialog.widgets.text import Const
-from aiogram.types import FSInputFile
-from aiogram_dialog.api.entities.modes import ShowMode
 
 # Локальные
 from dialogs.payment_diag import PaymentMenu
@@ -21,7 +13,7 @@ from dialogs.settings_diag import Settings
 from dialogs.tp_diag import TPBot
 from database import requests as rq
 
-from utils.scheduler_func import update_schedule_task, remove_schedule_task
+from utils.scheduler_func import remove_schedule_task
 from utils import mailing
 
 
@@ -44,7 +36,8 @@ async def get_id(dialog_manager: DialogManager, **kwargs):
         dialog_manager.dialog_data['is_testing'] = False
     else:
         dialog_manager.dialog_data['is_paid'] = user_from_Courses.is_paid
-        dialog_manager.dialog_data['is_testing'] = True if user_from_Courses.payment_period == 3 else False
+        dialog_manager.dialog_data['is_testing'] = True if user_from_Courses.payment_period == 3 and\
+            user_from_Courses.is_paid else False
     return {}
 
 
@@ -126,7 +119,7 @@ main_menu = Dialog(
 
         Row(
             Button(Const("Купить курс"), id="pay",
-                   on_click=start_pay_diag, when=not_yet_paid),
+                   on_click=start_pay_diag),
             Start(Const("Тех.поддержка"), id="help", state=TPBot.START),
         ),
         Row(
