@@ -58,8 +58,8 @@ async def download_zip(admin_id, start_y, start_m, start_d, end_y, end_m, end_d)
         start_m = 1
         start_y += 1
 
-    # Создание окончательного архива дл пересылки
-    source2 = f'{BASE_DIR}\\tmp_archivus'     # str
+    # Создание окончательного архива для пересылки
+    source2 = f'{BASE_DIR}\\tmp_archivus'
     arch = shutil.make_archive(f"archivus\\{date.today()}", "zip", source2)
     await mailing.mail_file(id=admin_id, file_path=arch)
     remove(arch)

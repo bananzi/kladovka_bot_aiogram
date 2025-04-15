@@ -1,6 +1,5 @@
 from typing import Dict
-import re
-from datetime import datetime, timedelta
+
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram import types
@@ -18,24 +17,19 @@ from aiogram_dialog.api.entities.modes import ShowMode
 
 # Локальные
 from dialogs.payment_diag import PaymentMenu
+from dialogs.settings_diag import Settings
 from dialogs.tp_diag import TPBot
 from database import requests as rq
 
-from utils.scheduler_func import update_schedule_task
+from utils.scheduler_func import update_schedule_task, remove_schedule_task
 from utils import mailing
 
 
-async def get_true(dialog_manager: DialogManager, **kwargs):
-    if await rq.is_already_recieved(dialog_manager.dialog_data["user_id"]):
-        return {
-            "already_recieved": True,
-            "not_already_recieved": False
-        }
-    else:
-        return {
-            "already_recieved": False,
-            "not_already_recieved": True
-        }
+async def test_clear_all(callback, button: Button,
+                         dialog_manager: DialogManager):
+    await remove_schedule_task(dialog_manager.dialog_data["user_id"])
+    await rq.for_test_clear_courses(dialog_manager.dialog_data["user_id"])
+    await rq.for_test_clear_TimeMailing(dialog_manager.dialog_data["user_id"])
 
 
 async def get_id(dialog_manager: DialogManager, **kwargs):
@@ -83,81 +77,18 @@ async def start_pay_diag(callback, button: Button,
     await dialog_manager.start(PaymentMenu.START, data=dialog_manager.dialog_data)
 
 
+async def start_settings_diag(callback, button: Button,
+                              dialog_manager: DialogManager):
+    '''Функция стартует диалог с настройками'''
+    await dialog_manager.start(Settings.START, data=dialog_manager.dialog_data)
+
+
 async def sub_set_payment(callback, button: Button,
                           dialog_manager: DialogManager):
     '''Функция для записи на пробный период.'''
     await rq.set_payment(dialog_manager.dialog_data['user_id'], course_id=0, duration_days_pay=3)
     await dialog_manager.start(state=PaymentMenu.SELECT_TIME)
     # await dialog_manager.switch_to(state=MainMenu.START, show_mode=ShowMode.SEND)
-
-
-async def process_new_time(message: Message,
-                           message_input: MessageInput,
-                           dialog_manager: DialogManager,):
-    '''
-    :message: Время введённое пользователем
-
-    Проверяет и обновляет время. Время должно быть в формате ЧЧ:ММ.
-    '''
-    new_time = message.text.strip()
-    # Проверяем, корректен ли ввод
-    if not re.match(r"^([01]\d|2[0-3]):([0-5]\d)$", new_time):
-        await message.answer("Некорректный формат времени. Введи в формате ЧЧ:ММ (например, 08:30).")
-        return
-
-    new_hour, new_minute = map(int, new_time.split(":"))
-    perenos = int(dialog_manager.dialog_data["switch_time"])
-    tg_id = message.from_user.id  # ID пользователя
-
-    # Обновляем расписание
-    if perenos != 2:
-
-        await update_schedule_task(tg_id, new_hour, new_minute, perenos, 0)
-    else:
-
-        dialog_manager.dialog_data["new_hour"] = new_hour
-        dialog_manager.dialog_data["new_minute"] = new_minute
-        await dialog_manager.switch_to(MainMenu.CHANGE_DAY)
-        return
-    await message.answer(f"Время рассылки изменено на {new_hour}:{new_minute}. ")
-
-    # Возвращаем пользователя в меню
-    await dialog_manager.switch_to(MainMenu.START)
-
-
-async def process_new_time_and_day(message: Message,
-                                   message_input: MessageInput,
-                                   dialog_manager: DialogManager,):
-    '''
-    :message: Дата введённая пользователем.
-
-    Проверяет и обновляет отсрочку высылки заданий для пользователя
-    '''
-    new_day = message.text.strip()
-    if not re.match(r"^(0[1-9]|[12]\d|3[01])-(0[1-9]|1[0-2])-\d{4}$", new_day):
-        await message.answer("Некорректный формат даты. Введи в формате ДД-ММ-ГГГГ (например, 05-07-2004).")
-        return
-
-    try:
-        input_date = datetime.strptime(new_day, "%d-%m-%Y").date()
-        today = datetime.today().date()
-        max_allowed_date = today + timedelta(days=7)
-        if input_date > max_allowed_date:
-            await message.answer("Ты ввёл дату больше черем через 7 дней от сегодня. Выбери дату ближе.")
-            return
-    except ValueError:
-        await message.answer("Некорректная дата. Проверь правильность написания и что этот день существует.")
-        return
-
-    dialog_manager.dialog_data["switch_day"] = new_day
-    new_hour = dialog_manager.dialog_data["new_hour"]
-    new_minute = dialog_manager.dialog_data["new_minute"]
-    perenos = dialog_manager.dialog_data["switch_time"]
-    tg_id = message.from_user.id  # ID пользователя
-    await update_schedule_task(tg_id, new_hour, new_minute, perenos, new_day)
-
-    await message.answer(f"Время рассылки изменено на {new_hour}:{new_minute}. А дата на {new_day}")
-    await dialog_manager.switch_to(MainMenu.START)
 
 
 async def test_period_wind(callback, button: Button,
@@ -172,21 +103,8 @@ async def back_main(callback, button: Button,
     await dialog_manager.switch_to(MainMenu.START)
 
 
-async def start_change_time(callback, button: Button, dialog_manager):
-    '''Открывает окно изменения времени.'''
-    await dialog_manager.switch_to(MainMenu.PRE_CHANGE_TIME)
-
-
-async def pre_change_time(callback, button: Button, dialog_manager: DialogManager):
-    '''Делает предварительную обработку какую кнопку нажал пользователь, а затем запускает основное окно смены времени.'''
-    perenos = button.widget_id.split("_")[1]
-    dialog_manager.dialog_data['switch_time'] = perenos
-    await dialog_manager.switch_to(MainMenu.CHANGE_TIME)
-
-
 async def testing_add_day(callback, button: Button, dialog_manager: DialogManager):
     '''Функция для ручного добавления дня курса в БД и моментальной отсылки задания'''
-
     # print(dialog_manager.dialog_data["user_id"])
     user_id = dialog_manager.dialog_data["user_id"]
     # await rq.add_day(user_id)
@@ -196,8 +114,9 @@ async def testing_add_day(callback, button: Button, dialog_manager: DialogManage
 class MainMenu(StatesGroup):
     START = State()
     TEST_QUEST = State()
-    CHANGE_TIME = State()
     PRE_CHANGE_TIME = State()
+    CHANGE_TIME = State()
+    PRE_CHANGE_DAY = State()
     CHANGE_DAY = State()
 
 
@@ -219,13 +138,17 @@ main_menu = Dialog(
                    id="send", on_click=done_main, when=may_send_answer),
         ),
         Row(
-            Button(Const("Изменить время рассылки"), id="change_time",
-                   on_click=start_change_time, when=may_send_answer)
+            Button(Const("Настройки"), id="change_time",
+                   on_click=start_settings_diag, when=may_send_answer),
         ),
         Row(
             Button(Const("test text"),
                    id="test_text",
                    on_click=testing_add_day)
+        ),
+        Row(
+            Button(Const("clear all"), id="clear_course",
+                   on_click=test_clear_all),
         ),
         getter=get_id,
         state=MainMenu.START
@@ -234,33 +157,13 @@ main_menu = Dialog(
         StaticMedia(
             path="D:\\code\\podsobka\\utils\\tmp\\Обложка 0_0.png"
         ),
-        Const("Пробный период длится 3 дня. Выбери время, в которое тебе будет удобно получать задания⏰. Помни, что задание можно выполнить только до 23.59 того дня, в которое ты его получил.\nДавай начнем!"),
+        Const("Пробный период длится 3 дня.\n\n\
+Далее ты сможешь выбрать дату старта и время, когда будешь получать задания ⏰\n\n\
+Помни, что задание можно выполнить только до 23:59 того дня, в которое ты его получил.\n\n\
+Давай начнем! 👾"),
         Button(Const("Начнём!"), id="trial", on_click=sub_set_payment),
-        Button(Const("Вернуться меню"), id='back_main', on_click=back_main),
+        Button(Const("Вернуться в главное меню"),
+               id='back_main', on_click=back_main),
         state=MainMenu.TEST_QUEST,
     ),
-    Window(
-        Const("Ты ещё не получал задание сегодня, поэтому ты можешь выбрать, когда получить задание: сегодня, завтра или выбери дату на выбор.", when="not_already_recieved"),
-        Const("Ты уже получил задание сегодня, поэтому ты можешь выбрать только время высылки задания на завтра или перенести на позже.", when="already_recieved"),
-        Row(
-            Button(Const("Сегодня"), id="perenos_0",
-                   on_click=pre_change_time, when="not_already_recieved"),
-            Button(Const("Завтра"), id="perenos_1", on_click=pre_change_time),
-            ),
-        Button(Const("Выбрать дату"), id="perenos_2", on_click=pre_change_time),
-        Button(Const("Вернуть в главное меню"), id="return_main_time", on_click=back_main),
-        state=MainMenu.PRE_CHANGE_TIME,
-        getter=get_true
-    ),
-    Window(
-        Const("Введи новое время в формате ЧЧ:ММ (например, 08:30):"),
-        MessageInput(process_new_time),
-        state=MainMenu.CHANGE_TIME
-    ),
-    Window(
-        Const("Выберите дату на которую ты хочешь перенести задание (Если укажешь дату до сегодняшней, то задания будут приходить как и прежде).\
-Введи в формате ДД-ММ-ГГГГ (например, 05-07-2004). Максимальный срок на который ты можешь отложить задание - это неделя. Количество переносов неограниченно"),
-        MessageInput(process_new_time_and_day),
-        state=MainMenu.CHANGE_DAY
-    )
 )

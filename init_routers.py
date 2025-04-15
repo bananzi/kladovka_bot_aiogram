@@ -10,7 +10,7 @@ from database import models, requests
 # импорт конфига
 from config_reader import config
 # импорт диалогов
-from dialogs import main_menu_diag, payment_diag, tp_diag, admin_diag
+from dialogs import main_menu_diag, payment_diag, tp_diag, admin_diag, settings_diag
 
 # импорт хендлеров
 from handlers import start_hand, diff_hand, callback_hand, ids_hand, admin_start_hand, admin_download
@@ -23,6 +23,7 @@ def initialise(dp: Dispatcher):
     dp.include_routers(main_menu_diag.main_menu)
     dp.include_routers(payment_diag.payment_menu)
     dp.include_routers(tp_diag.tp_bot_menu)
+    dp.include_routers(settings_diag.settings)
     dp.include_router(admin_diag.admin_menu)
     dp.include_routers(callback_hand.router,
                         diff_hand.router)

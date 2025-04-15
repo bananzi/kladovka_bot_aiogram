@@ -78,7 +78,7 @@ async def set_payment(tg_id, course_id, duration_days_pay):
 
 async def set_pre_pay(tg_id, period):
     '''
-    В данный момент лишняя функция
+    В данный момент лишняя функция.
     '''
     try:
         async with async_session() as session:
@@ -208,8 +208,8 @@ async def update_payments():
 
             update_recieved = update(Course).values(
                 {
-                "already_received": False,
-                "already_completed": False
+                    "already_received": False,
+                    "already_completed": False
                 }
             )
             await session.execute(update_recieved)
@@ -311,7 +311,7 @@ async def get_schedules_list():
             db_list_jobs = await session.scalars(select(TimeMailing))
             for user in db_list_jobs:
                 list_current_job.append(
-                    (user.tg_id, user.time_hour, user.time_minute, user.stop_until))
+                    (user.tg_id, user.time_hour, user.time_minute, user.stop_until, user.day_sending))
             return list_current_job
     except Exception as e:
         await session.rollback()  # Откатываем сессию при ошибке
@@ -320,7 +320,7 @@ async def get_schedules_list():
         await session.close()  # Закрываем сессию
 
 
-async def update_user_schedule(tg_id, new_hour, new_minute, day):
+async def update_user_schedule(tg_id, new_hour: str, new_minute: str, new_days, new_stop_until):
     '''
     :tg_id: id пользователя, которому нужно изменить время в БД
     :`new_hour, new_minute`: Новое время
@@ -330,14 +330,87 @@ async def update_user_schedule(tg_id, new_hour, new_minute, day):
     try:
         async with async_session() as session:
             user = await session.scalar(select(TimeMailing).where(TimeMailing.tg_id == tg_id))
+            if not user:
+                session.add(TimeMailing(
+                    tg_id=tg_id,
+                    time_hour=new_hour,
+                    time_minute=new_minute,
+                    day_sending=new_days,
+                    stop_until=new_stop_until if new_stop_until != 0 else None))
+            else:
+                user.time_hour = new_hour
+                user.time_minute = new_minute
+                user.day_sending = new_days if new_days != 0 else user.day_sending
+                user.stop_until = new_stop_until if new_stop_until != 0 else None
+            await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+
+async def update_mailing_time(tg_id, new_hour, new_minute, perenos=0):
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(TimeMailing).where(TimeMailing.tg_id == tg_id))
             if user:
                 user.time_hour = new_hour
                 user.time_minute = new_minute
-                user.stop_until = day if day != 0 else None
+                user.stop_until = (datetime.date.today() + \
+                        datetime.timedelta(days=1)).strftime("%d-%m-%Y") if perenos == 1 else user.stop_until
                 await session.commit()
     except Exception as e:
         await session.rollback()
         raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+
+async def update_mailing_days(tg_id, new_days_sending):
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(TimeMailing).where(TimeMailing.tg_id == tg_id))
+            if user:
+                user.day_sending = new_days_sending
+                await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+
+async def update_mailing_stop_until(tg_id, new_stop_until):
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(TimeMailing).where(TimeMailing.tg_id == tg_id))
+            if user:
+                user.stop_until = new_stop_until
+                await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+
+async def get_info_timemailing(tg_id, need_fields=None):
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(TimeMailing).where(TimeMailing.tg_id == tg_id))
+            if user:
+                all_fields = {
+                    "tg_id": user.tg_id,
+                    "time_hour": user.time_hour,
+                    "time_minute": user.time_minute,
+                    "day_sending": user.day_sending,
+                    "stop_until": user.stop_until,
+                }
+                if need_fields:
+                    return {field: all_fields[field] for field in need_fields if field in all_fields}
+                else:
+                    return all_fields
     finally:
         await session.close()  # Закрываем сессию
 
@@ -381,6 +454,7 @@ async def set_already_received(tg_id):
     finally:
         await session.close()  # Закрываем сессию
 
+
 async def is_already_recieved(tg_id):
     try:
         async with async_session() as session:
@@ -392,6 +466,7 @@ async def is_already_recieved(tg_id):
         raise e
     finally:
         await session.close()  # Закрываем сессию
+
 
 async def set_already_completed(tg_id):
     try:
@@ -406,14 +481,47 @@ async def set_already_completed(tg_id):
     finally:
         await session.close()  # Закрываем сессию
 
+
 async def add_total_completed(tg_id):
     try:
         async with async_session() as session:
             user = await session.scalar(select(Course).where(Course.tg_id == tg_id))
             if user:
-                if not(user.already_completed):
+                if not (user.already_completed):
                     user.total_completed += 1
                     await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+
+async def for_test_clear_courses(tg_id):
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(Course).where(Course.tg_id == tg_id))
+            if user:
+                await session.execute(
+                    delete(Course).where(Course.tg_id == tg_id)
+                )
+                await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+
+async def for_test_clear_TimeMailing(tg_id):
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(TimeMailing).where(TimeMailing.tg_id == tg_id))
+            if user:
+                await session.execute(
+                    delete(TimeMailing).where(TimeMailing.tg_id == tg_id)
+                )
+                await session.commit()
     except Exception as e:
         await session.rollback()
         raise e

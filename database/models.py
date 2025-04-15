@@ -51,6 +51,7 @@ class TimeMailing(Base):
     tg_id = mapped_column(BigInteger)
     time_hour = mapped_column(Integer)
     time_minute = mapped_column(Integer)
+    day_sending = mapped_column(String(40), default="mon,tue,wed,thu,fri")
     stop_until = mapped_column(String(20), default=None)
 
 
