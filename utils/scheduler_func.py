@@ -35,14 +35,13 @@ async def import_scheduler_tasks():
     list_jobs = await rq.get_schedules_list()
     for job in list_jobs:
         perenos = 0 if job[3] is None else 2
-        await add_schedule_task(tg_id=job[0], hour=job[1], minute=job[2], perenos=perenos, new_stop_until=job[3], new_day_sending=job[4])
+        await add_schedule_task(user_id=job[0], hour=job[1], minute=job[2], perenos=perenos, new_stop_until=job[3], new_day_sending=job[4])
     scheduler.add_job(rq.update_payments, trigger='cron',
                       hour=0, start_date=datetime.datetime.today()-datetime.timedelta(days=1))
-
     scheduler.print_jobs()
 
 
-async def add_schedule_task(tg_id, hour, minute, perenos: int, new_stop_until: str, new_day_sending: str):
+async def add_schedule_task(user_id, hour, minute, perenos: int, new_stop_until: str, new_day_sending: str):
     '''
     :tg_id: id пользователя для рассылки.
     :hour, minute: Выбранное время.
@@ -59,9 +58,9 @@ async def add_schedule_task(tg_id, hour, minute, perenos: int, new_stop_until: s
         start = datetime.datetime.today()+datetime.timedelta(days=1)
     else:
         day, month, year = map(int, new_stop_until.split("-"))
-        start = datetime.datetime(year, month, day)
+        start = datetime.datetime(year, month, day) - datetime.timedelta(days=1)
 
-    job_id = f"job_{tg_id}"
+    job_id = f"job_{user_id}"
     scheduler.add_job(
         mailing.mailing,
         trigger='cron',
@@ -70,9 +69,9 @@ async def add_schedule_task(tg_id, hour, minute, perenos: int, new_stop_until: s
         day_of_week=new_day_sending,
         start_date=start,
         id=job_id,
-        kwargs={"tg_id": tg_id}
+        kwargs={"tg_id": user_id}
     )
-    schedule_logger.info(f"Добавлена новая job для пользователя {tg_id}")
+    schedule_logger.info(f"Для пользователя {user_id} добавлена новая job: {scheduler.get_job(job_id)}")
 
 
 async def remove_schedule_task(tg_id):
@@ -85,7 +84,6 @@ async def remove_schedule_task(tg_id):
     if scheduler.get_job(job_id):
         scheduler.remove_job(job_id)
         schedule_logger.info(f"Удалена старая job для пользователя {tg_id}")
-
 
 async def update_schedule_task(tg_id, new_hour, new_minute, new_days_sending: set, new_stop_until: str, perenos: int = 0):
     '''
@@ -125,7 +123,7 @@ async def update_schedule_time(tg_id, new_hour, new_minute, perenos):
 
     user_info = await rq.get_info_timemailing(tg_id, ["tg_id", "time_hour", "time_minute", "stop_until", "day_sending"])
     await add_schedule_task(
-        tg_id=user_info["tg_id"], hour=user_info["time_hour"],
+        user_id=user_info["tg_id"], hour=user_info["time_hour"],
         minute=user_info["time_minute"], perenos=perenos,
         new_stop_until=user_info["stop_until"],
         new_day_sending=user_info["day_sending"]
@@ -146,7 +144,7 @@ async def update_schedule_days(tg_id, new_days_sending):
 
     user_info = await rq.get_info_timemailing(tg_id, ["tg_id", "time_hour", "time_minute", "stop_until", "day_sending"])
     await add_schedule_task(
-        tg_id=user_info["tg_id"],
+        user_id=user_info["tg_id"],
         hour=user_info["time_hour"],
         minute=user_info["time_minute"],
         perenos=0 if user_info["stop_until"] == None else 2,
@@ -169,7 +167,7 @@ async def update_schedule_stop_until(tg_id, new_stop_until):
 
     user_info = await rq.get_info_timemailing(tg_id, ["tg_id", "time_hour", "time_minute", "stop_until", "day_sending"])
     await add_schedule_task(
-        tg_id=user_info["tg_id"], hour=user_info["time_hour"],
+        user_id=user_info["tg_id"], hour=user_info["time_hour"],
         minute=user_info["time_minute"], perenos=2,
         new_stop_until=user_info["stop_until"],
         new_day_sending=user_info["day_sending"]

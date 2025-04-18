@@ -24,16 +24,36 @@ async def set_user(tg_id):
 
 async def is_user_paid(tg_id) -> bool:
     '''
-    :tg_id: id проверяемого пользователя на наличие оплаты.\n
-    Проверяет, есть ли у пользователя активная подписка.
+    :tg_id: id проверяемого пользователя на наличие оплаты.
+    
+    Проверяет, есть ли у пользователя активная подписка на платный курс.
     Возвращает True, если пользователь уже оплатил.
     '''
     try:
         async with async_session() as session:
             active_payment = await session.scalar(select(Course).where(
-                (Course.tg_id == tg_id) & (Course.is_paid.is_(True))
-            ))
+                (Course.tg_id == tg_id) & (Course.is_paid.is_(True)) & (Course.course_id != 0))
+            )
             return active_payment is not None  # Если запись есть, значит подписка активна
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()
+
+async def is_user_in_test_period(tg_id) -> bool:
+    '''
+    :tg_id: id проверяемого пользователя.
+
+    Проверяет, на пробном курсе человек или нет.
+    Возвращает True, если пользователь на пробном.
+    '''
+    try:
+        async with async_session() as session:
+            user_is_testing = await session.scalar(select(Course).where(
+                (Course.tg_id == tg_id) & (Course.is_paid.is_(True) & (Course.course_id == 0))
+            ))
+            return user_is_testing is not None  # Если запись есть, значит подписка активна
     except Exception as e:
         await session.rollback()
         raise e

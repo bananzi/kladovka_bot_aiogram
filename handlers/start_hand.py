@@ -5,7 +5,7 @@ from aiogram.filters.command import Command
 from aiogram.types import FSInputFile, InlineKeyboardButton
 from aiogram.types.callback_query import CallbackQuery 
 from aiogram_dialog import DialogManager
-from aiogram_dialog.api.entities.modes import ShowMode
+from aiogram_dialog.api.entities.modes import ShowMode, StartMode
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 ### импорты локальных файлов
 from text import hello
@@ -18,9 +18,9 @@ router = Router()
 @router.message(Command('start'))
 async def cmd_start(message: types.Message, dialog_manager: DialogManager):
     await rq.set_user(message.from_user.id)
-    if dialog_manager.has_context():
-        await dialog_manager.done()
-
+    # if dialog_manager.has_context():
+    #     await dialog_manager.done()
+    await dialog_manager.reset_stack()
     markup = InlineKeyboardBuilder()
     markup.add(InlineKeyboardButton(
         text="Круто!",
@@ -37,7 +37,7 @@ async def cmd_start(message: types.Message, dialog_manager: DialogManager):
 async def cmd_menu(message: types.Message, dialog_manager: DialogManager):
     # if dialog_manager.has_context():
     #     await dialog_manager.done()
-    await dialog_manager.start(MainMenu.START, data={"user_id": message.from_user.id}, show_mode=ShowMode.DELETE_AND_SEND)
+    await dialog_manager.start(MainMenu.START, data={"user_id": message.from_user.id}, mode=StartMode.RESET_STACK, show_mode=ShowMode.DELETE_AND_SEND)
 
 @router.callback_query(F.data == "kruto!")
 async def hello_words(callback_query: CallbackQuery, bot: Bot):

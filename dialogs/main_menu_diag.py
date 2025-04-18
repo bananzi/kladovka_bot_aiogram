@@ -34,10 +34,12 @@ async def get_id(dialog_manager: DialogManager, **kwargs):
     if not user_from_Courses:
         dialog_manager.dialog_data['is_paid'] = False
         dialog_manager.dialog_data['is_testing'] = False
+        dialog_manager.dialog_data['already_recieved'] = False
     else:
         dialog_manager.dialog_data['is_paid'] = user_from_Courses.is_paid
-        dialog_manager.dialog_data['is_testing'] = True if user_from_Courses.payment_period == 3 and\
-            user_from_Courses.is_paid else False
+        dialog_manager.dialog_data['already_recieved'] = user_from_Courses.already_received
+        dialog_manager.dialog_data['is_testing'] = True if (user_from_Courses.payment_period == 3) and\
+            (user_from_Courses.is_paid) else False
     return {}
 
 
@@ -51,9 +53,14 @@ def not_yet_paid(data: Dict, widget: Whenable, manager: DialogManager):
     return not data['dialog_data']["is_paid"]
 
 
-def may_send_answer(data: Dict, widget: Whenable, manager: DialogManager):
-    '''Возвращает True, если есть запись, что он на каком-лтбо курсе, в т.ч. тестовый.'''
+def user_already_in_course(data: Dict, widget: Whenable, manager: DialogManager):
+    '''Возвращает True, если есть запись, что он на каком-либо курсе, в т.ч. тестовый.'''
     return data['dialog_data']["is_paid"]
+
+
+def may_send_answer(data: Dict, widget: Whenable, manager: DialogManager):
+    '''Возвращает True, если пользователь уже получил сегодня задание, и теперь может отослать ответ.'''
+    return data['dialog_data']["already_recieved"] and data["dialog_data"]["is_paid"]
 
 
 async def done_main(callback, button: Button,
@@ -132,17 +139,17 @@ main_menu = Dialog(
         ),
         Row(
             Button(Const("Настройки"), id="change_time",
-                   on_click=start_settings_diag, when=may_send_answer),
+                   on_click=start_settings_diag, when=user_already_in_course),
         ),
-        Row(
-            Button(Const("test text"),
-                   id="test_text",
-                   on_click=testing_add_day)
-        ),
-        Row(
-            Button(Const("clear all"), id="clear_course",
-                   on_click=test_clear_all),
-        ),
+        # Row(
+        #     Button(Const("test text"),
+        #            id="test_text",
+        #            on_click=testing_add_day)
+        # ),
+        # Row(
+        #     Button(Const("clear all"), id="clear_course",
+        #            on_click=test_clear_all),
+        # ),
         getter=get_id,
         state=MainMenu.START
     ),
@@ -151,8 +158,9 @@ main_menu = Dialog(
             path="D:\\code\\podsobka\\utils\\tmp\\Обложка 0_0.png"
         ),
         Const("Пробный период длится 3 дня.\n\n\
-Далее ты сможешь выбрать дату старта и время, когда будешь получать задания ⏰\n\n\
-Помни, что задание можно выполнить только до 23:59 того дня, в которое ты его получил.\n\n\
+Далее ты сможешь выбрать дату старта, время и дни, когда будешь получать задания ⏰\n\n\
+Помни, что задание можно выполнить только до 23:59 того дня, в которое ты его получил.\n\
+Ты сможешь в любой момент перейти с пробного периода на платный курс.\n\n\
 Давай начнем! 👾"),
         Button(Const("Начнём!"), id="trial", on_click=sub_set_payment),
         Button(Const("Вернуться в главное меню"),

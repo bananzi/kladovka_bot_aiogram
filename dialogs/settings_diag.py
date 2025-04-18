@@ -106,7 +106,7 @@ async def process_new_time(message: Message,
     tg_id = message.from_user.id  # ID пользователя
 
     await update_schedule_time(tg_id, new_hour, new_minute, perenos)
-
+    await message.answer(f"Готово! Мы изменили время, в которое ты будешь получать задания: <b>{new_time}</b>")
     # Возвращаем пользователя в меню
     await dialog_manager.switch_to(Settings.START)
 
@@ -138,17 +138,17 @@ async def process_new_stop_until(message: Message,
     dialog_manager.dialog_data["switch_day"] = new_stop_until
     tg_id = message.from_user.id  # ID пользователя
     await update_schedule_stop_until(tg_id, new_stop_until)
-
+    await message.answer(f"Готово! Ты получишь следующие после перерыва задание не раньше <b>«{input_date}»</b>. Увидимся!")
     # await message.answer(f"Время рассылки изменено на {new_hour}:{new_minute}. А дата на {new_day}")
     await dialog_manager.switch_to(Settings.START)
 
 
 # Обработчик для переключения состояния CheckBox
-async def toggle_day(callback, button: Button, dialog_manager: DialogManager):
+async def toggle_day(callback: CallbackQuery, button: Button, dialog_manager: DialogManager):
     # id кнопки соответствует обозначению дня: "mon", "tue", и т.д.
     day = button.widget_id
     # Получаем текущее множество выбранных дней из dialog_data (инициализируется как set)
-    selected_days = dialog_manager.dialog_data.get("selected_days", set())
+    selected_days : set = dialog_manager.dialog_data.get("selected_days", set())
     if day in selected_days:
         selected_days.remove(day)
         new_state = False
@@ -159,13 +159,13 @@ async def toggle_day(callback, button: Button, dialog_manager: DialogManager):
         await callback.answer(f"День {TRANSLATE_DAYS[str(day)]} выбран")
     dialog_manager.dialog_data["selected_days"] = selected_days
     # Обновляем визуальное состояние виджета, вызывая set_checked
-    checkbox = dialog_manager.find(day)
+    checkbox : Checkbox = dialog_manager.find(day)
     await checkbox.set_checked(new_state)
     # Обновляем окно для отображения изменений
     await dialog_manager.update(data=dialog_manager.dialog_data)
 
 
-async def on_submit(callback, button: Button, dialog_manager: DialogManager):
+async def on_submit(callback: CallbackQuery, button: Button, dialog_manager: DialogManager):
     selected_days = dialog_manager.dialog_data.get("selected_days", set())
     user_id = callback.from_user.id
     dialog_manager.dialog_data["user_id"] = user_id
@@ -173,19 +173,16 @@ async def on_submit(callback, button: Button, dialog_manager: DialogManager):
     if len(selected_days) < 2:
         await callback.answer("Выбери минимум 2 дня!", show_alert=True)
         return
+    
+    await callback.message.answer(f"Готово! Мы сохранили дни, в которые ты будешь получать задания: \
+<b>{", ".join([TRANSLATE_DAYS[k] for k in TRANSLATE_DAYS if k in selected_days])}</b>")
     # Продолжаем работу, зная, что выбрано минимум 2 дня
-    await final_saving_days(callback=callback, dialog_manager=dialog_manager)
-
-
-async def final_saving_days(callback: CallbackQuery, dialog_manager: DialogManager):
-    user_id = dialog_manager.dialog_data["user_id"]
-    selected_days = dialog_manager.dialog_data["selected_days"]
     try:
         await update_schedule_days(user_id, selected_days)
         await callback.message.answer("Твой выбор дней сохранён.")
     except Exception as e:
         print(
-            f"У пользователя {user_id} возникла ошибка <<{e}>> при сохранении времени и дней рассылки.")
+            f"У пользователя {user_id} возникла ошибка <<{e}>> при изменении перерыва.")
         await callback.answer("Возникли проблемы при сохранении данных. Попробуй изменить данные через настройки в главном меню. Если продолжатся ошибки или ты не видишь этой кнопки, то сообщи об этом в тех. поддержку.")
     await dialog_manager.start(state=Settings.START, data=dialog_manager.dialog_data,
                                mode=StartMode.RESET_STACK, show_mode=ShowMode.DELETE_AND_SEND)
@@ -202,7 +199,9 @@ class Settings(StatesGroup):
 
 settings = Dialog(
     Window(
-        Const("Это настройки. Здесь ты можешь изменить время рассылки, а также дни в которые ты хочешь получать задания."),
+        Const("Это настройки.\n\n\
+Здесь ты можешь изменить время рассылки и дни, в которые ты хочешь получать задания.\n\
+Также здесь ты можешь взять перерыв от заданий на небольшой срок."),
         Row(
             Button(Const("Смена времени рассылки"),
                    id="start_change_time", on_click=start_change_time)
@@ -212,6 +211,10 @@ settings = Dialog(
                    id="start_pre_change_days", on_click=start_pre_change_day),
         ),
         Row(
+            Button(Const("Взять перерыв"), id="start_change_stop_until_settings",
+                   on_click=start_change_stop_until),
+        ),
+        Row(
             Button(Const("Вернуться в главное меню"),
                    id="back_main_menu_from_settings", on_click=back_main)
         ),
@@ -219,7 +222,8 @@ settings = Dialog(
         state=Settings.START
     ),
     Window(
-        Const("Ты ещё не получал задание сегодня, поэтому ты можешь выбрать время высылки задания, которое будет работать начиная с сегодня или взять сегодня выходной и изменить время, но не получать задание сегодня.",
+        Const("Ты еще не получал задание сегодня.\n\n\
+Ты можешь поменять время на сегодня ИЛИ на завтра (если меняешь на завтра, то сегодня задание уже не придет).",
               when="not_already_recieved"),
         Const("Ты уже получил задание сегодня, поэтому ты можешь выбрать время высылки задания, которое будет работать начиная с завтра.", when="already_recieved"),
         Row(
@@ -243,10 +247,6 @@ settings = Dialog(
         Row(
             Button(Const("Изменить дни рассылки"),
                    id="start_change_days_settings", on_click=start_change_days)
-        ),
-        Row(
-            Button(Const("Взять перерыв"), id="start_change_stop_until_settings",
-                   on_click=start_change_stop_until),
         ),
         Row(
             Button(Const("Вернуться в настройки"),
@@ -315,9 +315,12 @@ settings = Dialog(
         state=Settings.CHANGE_DAYS_OF_WEEK
     ),
     Window(
-        Const("Выберите дату на которую ты хочешь перенести задание (Если укажешь дату до сегодняшней, то задания будут приходить как и прежде).\
-Введи в формате ДД-ММ-ГГГГ (например, 05-07-2004). Максимальный срок на который ты можешь отложить задание - это неделя. Количество переносов неограниченно"),
+        Const("Введи дату, до которой ты не хочешь получать задание включительно (Если укажешь дату до сегодняшней, то задания будут приходить как и прежде).\
+Введи в формате ДД-ММ-ГГГГ (например, 05-07-2004).\n\n\
+Максимальный срок на который ты можешь отложить задание - это две недели. Количество переносов неограниченно. \n\
+Ты в любой момент можешь изменить свой выбор и получить задание раньше этой даты или позже."),
         MessageInput(process_new_stop_until),
+        Button(Const("Вернуться в меню без изменений"), id="back_settings", on_click=back_settings),
         state=Settings.CHANGE_STOP_UNTIL
     )
 )
