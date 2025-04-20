@@ -103,7 +103,7 @@ async def mailing(tg_id):
         if has_photo and has_url:
             await mail_and_text_photo_url(tg_id=tg_id, quest=quest, current_day=current_day)
         if not (has_photo and has_url):
-            await mail_sertain_text(tg_id=tg_id, text="Если увидели это, напишите @Bananzi")
+            await mail_sertain_text(tg_id=tg_id, text="Если увидели это, напишите в техподдержку")
         await rq.set_already_received(tg_id)
         
         await rq.add_day(tg_id)
