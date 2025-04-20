@@ -53,8 +53,10 @@ async def process_successful_payment(message: Message, dialog_manager: DialogMan
 
     # Записываем оплату
     await rq.set_payment(tg_id=user_id, course_id=course_id, duration_days_pay=course_lenght)
-    await message.answer(f"Оплата прошла успешно! Вы приобрели курс {course_id}.")
-
+    await message.answer(f"Оплата прошла успешно! Ты приобрёл курс {course_id}.")
+    promo_id = dialog_manager.dialog_data.get("promo_id")
+    if promo_id:
+        await rq.mark_promocode_used(user_id, promo_id)
     # Переключаем пользователя в окно выбора времени
     await dialog_manager.start(PaymentMenu.SELECT_TIME, mode=StartMode.RESET_STACK)
 

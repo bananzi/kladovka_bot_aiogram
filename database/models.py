@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, String, Integer, ForeignKey
+from sqlalchemy import BigInteger, String, Integer, ForeignKey, Boolean
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 
@@ -54,6 +54,20 @@ class TimeMailing(Base):
     day_sending = mapped_column(String(40), default="mon,tue,wed,thu,fri")
     stop_until = mapped_column(String(20), default=None)
 
+class PromoCode(Base):
+    __tablename__ = "promocodes"
+    id = mapped_column(Integer, primary_key=True)
+    code = mapped_column(String, unique=True)
+    discount = mapped_column(Integer)  # или discount_rub
+    one_time = mapped_column(Boolean, default=True)  # одноразовый для всех
+    for_user_id = mapped_column(BigInteger, nullable=True)  # если промо для конкретного пользователя
+    is_active = mapped_column(Boolean, default=True)
+
+class UsedPromo(Base):
+    __tablename__ = "used_promocodes"
+    id = mapped_column(Integer, primary_key=True)
+    user_id = mapped_column(BigInteger)
+    promocode_id = mapped_column(Integer, ForeignKey("promocodes.id"))
 
 async def async_main():
     async with engine.begin() as conn:

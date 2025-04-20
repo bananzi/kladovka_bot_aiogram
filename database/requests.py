@@ -1,8 +1,11 @@
+import secrets
+import string
+
 import datetime
 from database.models import async_session
-from database.models import User, Course, PrePayment, TimeMailing
+from database.models import User, Course, PrePayment, TimeMailing, PromoCode, UsedPromo
 from sqlalchemy import select, update, and_, delete
-
+from sqlalchemy.exc import IntegrityError
 
 async def set_user(tg_id):
     '''
@@ -542,6 +545,137 @@ async def for_test_clear_TimeMailing(tg_id):
                     delete(TimeMailing).where(TimeMailing.tg_id == tg_id)
                 )
                 await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+
+async def get_promocode_by_code(code: str):
+    '''
+    :code: проверяемый код на существование и, что он активен
+    '''
+    try:
+        async with async_session() as session:
+            result = await session.scalar(
+                select(PromoCode).where(PromoCode.code == code, PromoCode.is_active == True)  # noqa: E712
+            )
+            return result
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+async def code_was_used(user_id: int, promo_id: int) -> bool:
+    '''
+    :user_id: id пользователя, применяющий промокод.
+    :promo_id: id промокода, который хочет использовать пользователь.   
+
+    Проверяет использовал ли пользователь уже этот промокод. Возвращает True, если это так, иначе False.
+    '''
+    try:
+        async with async_session() as session:
+            result = await session.scalar(
+                select(UsedPromo).where(
+                    UsedPromo.user_id == user_id,
+                    UsedPromo.promocode_id == promo_id
+                )
+            )
+            return result is not None
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+
+async def mark_promocode_used(user_id: int, promo_id: int):
+    '''
+    :user_id: id пользователя, который уже использовал промокод.
+    :promo_id: id промокода, который использовал пользователь.
+
+    Помечает промокод использованным переданным пользователем.
+    '''
+    try:
+        async with async_session() as session:
+            usage = UsedPromo(user_id=user_id, promocode_id=promo_id)
+            session.add(usage)
+            await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+async def create_promocode(code: str, discount: int, one_time=True, for_user_id=None):
+    async with async_session() as session:
+        promo = PromoCode(
+            code=code,
+            discount=discount,
+            one_time=one_time,
+            for_user_id=for_user_id,
+            is_active=True,
+        )
+        session.add(promo)
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            return None  # Код уже существует
+        return promo
+
+
+def generate_promocode(length=8, prefix=""):
+    charset = string.ascii_uppercase + string.digits
+    code = ''.join(secrets.choice(charset) for _ in range(length))
+    return f"{prefix}{code}"
+
+
+async def generate_unique_promocode(session, prefix="", length=8):
+    while True:
+        code = generate_promocode(length, prefix)
+        exists = await session.scalar(
+            select(PromoCode).where(PromoCode.code == code)
+        )
+        if not exists:
+            return code
+
+
+async def auto_create_promocode(discount, one_time=True, for_user_id=None, prefix=""):
+    try:
+        async with async_session() as session:
+            code = await generate_unique_promocode(session, prefix)
+            promo = PromoCode(
+                code=code,
+                discount=discount,
+                one_time=one_time,
+                for_user_id=for_user_id,
+                is_active=True,
+            )
+            session.add(promo)
+            await session.commit()
+            return code
+    except Exception as e:
+        await session.rollback()
+        raise e
+    finally:
+        await session.close()  # Закрываем сессию
+
+async def is_user_completed_all(tg_id):
+    '''
+    :tg_id: id проверяемого пользователя в Course.
+
+    Возвращает True, если пользователь отправил ответов ровно столько сколько и заданий всего.
+    '''
+    try:
+        async with async_session() as session:
+            user = await session.scalar(select(Course).where(Course.tg_id == tg_id))
+            print(user, user.total_completed, user.payment_period, user.total_completed == user.payment_period)
+            if user and user.total_completed == user.payment_period:
+                return True
+            return False
     except Exception as e:
         await session.rollback()
         raise e

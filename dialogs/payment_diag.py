@@ -19,7 +19,7 @@ from text import all_quests
 
 list_course = {1: "Как вдохновляться чужим?", }
 PRICE_LIST = {
-    1: LabeledPrice(label="1 Курс", amount=360_00),  # 500 RUB
+    1: LabeledPrice(label="1 Курс", amount=390_00),  # 500 RUB
 }
 BASE_DIR = Path(__file__).resolve().parent.parent
 TRANSLATE_DAYS = {
@@ -40,6 +40,29 @@ async def get_id(dialog_manager: DialogManager, **kwargs):
     dialog_manager.dialog_data['user_id'] = dialog_manager.start_data['user_id']
     return {}
 
+async def handle_promocode(message: Message, message_input: MessageInput, dialog_manager: DialogManager):
+    code = message.text.strip()
+    user_id = message.from_user.id
+
+    promo = await rq.get_promocode_by_code(code)  # нужно реализовать в requests.py
+
+    if not promo or not promo.is_active:
+        await message.answer("❌ Промокод не найден или неактивен.")
+        return
+
+    if promo.for_user_id and promo.for_user_id != user_id:
+        await message.answer("❌ Промокод не найден или неактивен.")
+        return
+
+    if promo.one_time:
+        if await rq.code_was_used(user_id, promo.id):
+            await message.answer("❌ Этот промокод уже использовался.")
+            return
+
+    dialog_manager.dialog_data["discount"] = promo.discount
+    dialog_manager.dialog_data["promo_id"] = promo.id
+    await message.answer(f"✅ Промокод применён. Скидка {promo.discount} рублей!")
+    await dialog_manager.switch_to(PaymentMenu.WITH_PROMO)
 
 async def pre_pay(callback: CallbackQuery, button: Button,
                   dialog_manager: DialogManager):
@@ -86,6 +109,13 @@ async def process_payment(callback: CallbackQuery, button: Button,
     # await dialog_manager.start(PaymentMenu.SELECT_TIME)
     # ###
 
+    #Применение скидки от промокада если есть.
+
+    base_price = PRICE_LIST[course_id].amount  # в копейках
+    discount = dialog_manager.dialog_data.get("discount", 0)
+
+    final_price = int(base_price - discount*100)
+    prices = [LabeledPrice(label="Курс", amount=final_price)]
     # Вызов оплаты
 
     await callback.message.bot.send_invoice(
@@ -96,14 +126,10 @@ async def process_payment(callback: CallbackQuery, button: Button,
         payload=(str(course_id)+"_"+str(course_lenght)),
         provider_token=config.payment_token.get_secret_value(),
         currency="RUB",
-        prices=[PRICE_LIST[course_id]],
+        prices=prices,
         start_parameter="payment",
         # Можно запрашивать email, если нужно
     )
-
-
-async def is_recieved_today():
-    ...
 
 
 async def process_selecting_time(message: Message,
@@ -257,16 +283,18 @@ async def wind_zero(callback, button: Button, dialog_manager: DialogManager):
     await dialog_manager.switch_to(PaymentMenu.START)
 
 
-async def wind_one(callback, button: Button,
+async def wind_one(callback: CallbackQuery, button: Button,
                    dialog_manager: DialogManager):
     dialog_manager.dialog_data['course_id'] = 1
     dialog_manager.dialog_data['course_lenght'] = 7
     await dialog_manager.switch_to(PaymentMenu.FIRST_COURSE)
 
 
-async def wind_about_one(callback, button: Button, dialog_manager: DialogManager):
+async def wind_about_one(callback: CallbackQuery, button: Button, dialog_manager: DialogManager):
     await dialog_manager.switch_to(PaymentMenu.ABOUT_FIRST)
 
+async def wind_promo(callback: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    await dialog_manager.switch_to(PaymentMenu.ENTER_PROMO)
 
 async def wind_blank(callback, button: Button,
                      dialog_manager: DialogManager):
@@ -278,6 +306,8 @@ async def wind_blank(callback, button: Button,
 
 class PaymentMenu(StatesGroup):
     START = State()
+    ENTER_PROMO = State()
+    WITH_PROMO = State()
     FIRST_COURSE = State()
     ABOUT_FIRST = State()
     BLANK_COURSE = State()
@@ -321,13 +351,28 @@ payment_menu = Dialog(
                    id="about_one", on_click=wind_about_one)
         ),
         Row(
-            Button(Const("Купить курс"), id="payone", on_click=pre_pay),
+            Button(Const("Купить курс"), id="payone", on_click=wind_promo),
         ),
         Row(
             Button(Const("Вернуться назад"),
                    id="payzero", on_click=wind_zero)
         ),
         state=PaymentMenu.FIRST_COURSE
+    ),
+    Window(
+        Const("Если у тебя есть промокод — введи его сейчас 🎁\n\nИли нажми «Продолжить»"),
+        MessageInput(handle_promocode),
+        Row(
+            Button(Const("Продолжить без промокода"), id="skip_promo", on_click=pre_pay)
+        ),
+        state=PaymentMenu.ENTER_PROMO,
+    ),
+    Window(
+        Const("Твой промокод применён. Чтобы продолжить нажми на кнопку ниже и продолжи оплату."),
+        Row(
+            Button(Const("Продолжить"), id="with_promo", on_click=pre_pay)
+        ),
+        state=PaymentMenu.WITH_PROMO,
     ),
     Window(
         StaticMedia(path=str(BASE_DIR / "utils" / "tmp" / "Обложка 1_0.jpg")),

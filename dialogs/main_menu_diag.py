@@ -111,7 +111,9 @@ async def testing_add_day(callback, button: Button, dialog_manager: DialogManage
     # await rq.add_day(user_id)
     await mailing.mailing(user_id)
 
-
+async def create_promo(callback, button, dialog_manager: DialogManager):
+    await rq.auto_create_promocode(100, False, for_user_id=605954613)
+    return
 class MainMenu(StatesGroup):
     START = State()
     TEST_QUEST = State()
@@ -128,7 +130,7 @@ main_menu = Dialog(
         Row(
             Button(Const("Купить курс"), id="pay",
                    on_click=start_pay_diag),
-            Url(Const("Тех.поддержка"), url=Const("https://t.me/kladovationDesign_bot")),
+            
         ),
         Row(
             Button(Const("Тестовый период"),
@@ -142,6 +144,13 @@ main_menu = Dialog(
             Button(Const("Настройки"), id="change_time",
                    on_click=start_settings_diag, when=user_already_in_course),
         ),
+         Row(
+            Url(Const("Наш канал"), url=Const("https://t.me/kladovka_design_bot")),
+            Url(Const("Тех.поддержка"), url=Const("https://t.me/kladovationDesign_bot")),
+            ),
+        # Row(
+        #     Button(Const("create rand promo"), id="create_promo", on_click=create_promo)
+        # ),
         # Row(
         #     Button(Const("test text"),
         #            id="test_text",
