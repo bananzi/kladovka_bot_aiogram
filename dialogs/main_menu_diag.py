@@ -146,7 +146,7 @@ main_menu = Dialog(
         ),
          Row(
             Url(Const("Наш канал"), url=Const("https://t.me/kladovka_design_bot")),
-            Url(Const("Тех.поддержка"), url=Const("https://t.me/kladovationDesign_bot")),
+            Url(Const("Тех.поддержка"), url=Const("https://t.me/KladovkaDesignHelp_bot")),
             ),
         # Row(
         #     Button(Const("create rand promo"), id="create_promo", on_click=create_promo)
