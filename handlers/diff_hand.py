@@ -19,7 +19,7 @@ router.message.filter(UserInCourse())
 def make_dir():
     now_datetime = str(datetime.today()).split(' ')
     BASE_DIR = Path(__file__).resolve().parent.parent
-    download_path = f"{BASE_DIR}\\tmp\\{now_datetime[0]}"
+    download_path = f"{BASE_DIR}/tmp/{now_datetime[0]}"
     if not path.exists(download_path):
         mkdir(download_path)
     return now_datetime, download_path
@@ -30,7 +30,7 @@ async def download_photo(message: Message, bot: Bot, user_id: int):
     try:
         await bot.download(
             message.photo[-1],
-            destination=f"{download_path}\\{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.jpg"
+            destination=f"{download_path}/{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.jpg"
         )
         await bot.send_message(chat_id=user_id, text=dowload_anwers["ok"])
         await add_total_completed(user_id)
@@ -44,7 +44,7 @@ async def download_text(message: Message, bot: Bot, user_id: int):
     now_datetime, download_path = make_dir()
 
     try:
-        with open(f"{download_path}\\{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.txt", "w") as file:
+        with open(f"{download_path}/{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.txt", "w") as file:
             file.write(message.text)
         await bot.send_message(chat_id=user_id, text=dowload_anwers['ok'])
         await add_total_completed(user_id)
@@ -60,7 +60,7 @@ async def download_video(message: Message, bot: Bot, user_id: int):
     try:
         file_id = message.video.file_id 
         file = await bot.get_file(file_id) 
-        await bot.download_file(file.file_path, f"{download_path}\\{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.mp4")
+        await bot.download_file(file.file_path, f"{download_path}/{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.mp4")
         await bot.send_message(chat_id=user_id, text=dowload_anwers['ok'])
         await add_total_completed(user_id)
         await set_already_completed(user_id)

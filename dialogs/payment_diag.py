@@ -1,6 +1,6 @@
 import datetime
 import re
-
+from pathlib import Path
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, LabeledPrice, CallbackQuery
 
@@ -21,7 +21,7 @@ list_course = {1: "Как вдохновляться чужим?", }
 PRICE_LIST = {
     1: LabeledPrice(label="1 Курс", amount=360_00),  # 500 RUB
 }
-
+BASE_DIR = Path(__file__).resolve().parent.parent
 TRANSLATE_DAYS = {
     "mon": "Пн",
     "tue": "Вт",
@@ -310,7 +310,7 @@ payment_menu = Dialog(
         state=PaymentMenu.START
     ),
     Window(
-        StaticMedia(path="utils/tmp/Обложка 1_0.jpg"),
+        StaticMedia(path=str(BASE_DIR / "utils" / "tmp" / "Обложка 1_0.jpg")),
         Const(
             "Ты выбрал курс\n\
 «Как вдохновляться чужим?»\n\n\
@@ -330,7 +330,7 @@ payment_menu = Dialog(
         state=PaymentMenu.FIRST_COURSE
     ),
     Window(
-        StaticMedia(path="utils/tmp/Обложка 1_0.jpg"),
+        StaticMedia(path=str(BASE_DIR / "utils" / "tmp" / "Обложка 1_0.jpg")),
         Const(text=str(all_quests["quest_1"][0]["text"])),
         Row(Button(Const("Купить курс"), id="pay_from_about_one", on_click=pre_pay)),
         Row(

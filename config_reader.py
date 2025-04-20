@@ -5,6 +5,7 @@ from pydantic import SecretStr
 class Settings(BaseSettings):
     
     bot_token: SecretStr
+    tp_bot_token: SecretStr
     payment_token: SecretStr
     # Начиная со второй версии pydantic, настройки класса настроек задаются
     # через model_config

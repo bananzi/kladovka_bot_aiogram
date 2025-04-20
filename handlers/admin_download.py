@@ -31,8 +31,8 @@ async def download_zip(admin_id, start_y, start_m, start_d, end_y, end_m, end_d)
     Отправляет админу архив с ответами пользователей в заданном временом промежутке.
     '''
     BASE_DIR = Path(__file__).resolve().parent.parent
-    source1 = f"{BASE_DIR}\\tmp"
-    distinate = f"{BASE_DIR}\\tmp_archivus"
+    source1 = f"{BASE_DIR}/tmp"
+    distinate = f"{BASE_DIR}/tmp_archivus"
     mkdir(distinate)
     # print(f'{BASE_DIR}\n{distinate}')
     # Создание архивов по выбранным датам
@@ -45,8 +45,8 @@ async def download_zip(admin_id, start_y, start_m, start_d, end_y, end_m, end_d)
 
                 # print(f"{source1}\\{need_y}-{need_m}-{need_d}")
                 try:
-                    need_source = f"{source1}\\{need_y}-{need_m}-{need_d}"
-                    need_distinate = f"{distinate}\\{need_y}-{need_m}-{need_d}"
+                    need_source = f"{source1}/{need_y}-{need_m}-{need_d}"
+                    need_distinate = f"{distinate}/{need_y}-{need_m}-{need_d}"
                     shutil.copytree(need_source, need_distinate)
                     # print(f"{need_y}-{need_m}-{need_d}------------ok")
                 except Exception as e:
@@ -58,8 +58,8 @@ async def download_zip(admin_id, start_y, start_m, start_d, end_y, end_m, end_d)
         start_y += 1
 
     # Создание окончательного архива для пересылки
-    source2 = f'{BASE_DIR}\\tmp_archivus'
-    arch = shutil.make_archive(f"archivus\\{date.today()}", "zip", source2)
+    source2 = f'{BASE_DIR}/tmp_archivus'
+    arch = shutil.make_archive(f"archivus/{date.today()}", "zip", source2)
     await mailing.mail_file(id=admin_id, file_path=arch)
     remove(arch)
     remove(distinate)

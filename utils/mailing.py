@@ -41,7 +41,7 @@ async def mail_sertain_photo(chat_id, path: str):
     Функция отправляет заданное фото заданному пользователю.
     '''
     BASE_DIR = Path(__file__).resolve().parent.parent
-    source = f"{BASE_DIR}\\{path}"
+    source = f"{BASE_DIR}/{path}"
     # print(source)
     await bot.send_photo(chat_id=chat_id, photo=FSInputFile(path=source))
 
@@ -72,11 +72,11 @@ async def mail_and_text_photo_url(tg_id, quest, current_day):
         text="Читать задание",
         url=quest[current_day]["url"])
     )
-
+    BASE_DIR = Path(__file__).resolve().parent.parent
     await bot.send_photo(
         chat_id=tg_id,
         photo=FSInputFile(
-            path=f"D:\\code\\podsobka\\utils\\tmp\\{quest[current_day]["photo"]}"),
+            path=f"{BASE_DIR}/utils/tmp/{quest[current_day]["photo"]}"),
         caption=quest[current_day]["text"],
         reply_markup=keyboard.as_markup()
     )

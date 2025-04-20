@@ -1,6 +1,6 @@
 ### Импорты необходимых библиотек
 from aiogram import types, Router, F, Bot
-
+from pathlib import Path
 from aiogram.filters.command import Command
 from aiogram.types import FSInputFile, InlineKeyboardButton
 from aiogram.types.callback_query import CallbackQuery 
@@ -26,12 +26,12 @@ async def cmd_start(message: types.Message, dialog_manager: DialogManager):
         text="Круто!",
         callback_data="kruto!")
     )
+    BASE_DIR = Path(__file__).resolve().parent.parent
 
-    await message.answer_photo(FSInputFile(f"D:\\code\\podsobka\\utils\\tmp\\{hello[1][1]}"), caption=f"{hello[1][0]}")
+    await message.answer_photo(FSInputFile(str(BASE_DIR / "utils" / "tmp" / f"{hello[1][1]}")), caption=f"{hello[1][0]}")
     await message.answer(text=f"{hello[2]}", reply_markup=markup.as_markup())
     return
 
-    
 
 @router.message(Command('menu'))
 async def cmd_menu(message: types.Message, dialog_manager: DialogManager):

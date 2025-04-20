@@ -1,9 +1,9 @@
 from typing import Dict
-
+from pathlib import Path
 from aiogram.fsm.state import State, StatesGroup
 from aiogram_dialog import Dialog, Window, DialogManager
 from aiogram_dialog.widgets.common import Whenable
-from aiogram_dialog.widgets.kbd import Button, Row, Start, Cancel  # noqa: F401
+from aiogram_dialog.widgets.kbd import Button, Row, Url, Start, Cancel  # noqa: F401
 from aiogram_dialog.widgets.media import StaticMedia
 from aiogram_dialog.widgets.text import Const
 
@@ -15,6 +15,7 @@ from database import requests as rq
 
 from utils.scheduler_func import remove_schedule_task
 from utils import mailing
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 async def test_clear_all(callback, button: Button,
@@ -127,7 +128,7 @@ main_menu = Dialog(
         Row(
             Button(Const("Купить курс"), id="pay",
                    on_click=start_pay_diag),
-            Start(Const("Тех.поддержка"), id="help", state=TPBot.START),
+            Url(Const("Тех.поддержка"), url=Const("https://t.me/kladovationDesign_bot")),
         ),
         Row(
             Button(Const("Тестовый период"),
@@ -155,7 +156,7 @@ main_menu = Dialog(
     ),
     Window(
         StaticMedia(
-            path="D:\\code\\podsobka\\utils\\tmp\\Обложка 0_0.png"
+            path=f"{BASE_DIR}/utils/tmp/Обложка 0_0.png"
         ),
         Const("Пробный период длится 3 дня.\n\n\
 Далее ты сможешь выбрать дату старта, время и дни, когда будешь получать задания ⏰\n\n\
