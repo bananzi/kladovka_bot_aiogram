@@ -34,7 +34,6 @@ async def on_unknown_intent(event, dialog_manager: DialogManager):
     await mail_sertain_text(tg_id=chat_id,
                             text="Произошла небольшая ошибка на сервере, вероятнее всего бот был перезапущен. Если ты хочешь увидеть приветсвенное сообщение, то введи /start. Если ты хочешь войти в главное меню, то введи /menu. \n В случае, если проблема повторилась, советуем обратиться в техническую поддержку.")
 
-
 async def pre_checkout_query(pre_checkout_query: PreCheckoutQuery):
     '''
     Проверка оплаты от телеграмма
