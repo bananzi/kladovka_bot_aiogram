@@ -1,12 +1,16 @@
 # импорты локальных файлов
+from database import requests as rq
 from filters.user_filters import UserInCourse
-from database.requests import set_already_completed, add_total_completed
+from text import all_quests
+
 # Импорты необходимых библиотек
 from aiogram import Bot, F, Router
 from aiogram.types import Message
 from datetime import datetime
-from pathlib import Path
 from os import mkdir, path
+from pathlib import Path
+
+from utils.mailing import mail_sertain_text
 
 dowload_anwers = {
     "ok": "Ответ загружен. Для выхода в меню используй команду /menu",
@@ -33,8 +37,7 @@ async def download_photo(message: Message, bot: Bot, user_id: int):
             destination=f"{download_path}/{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.jpg"
         )
         await bot.send_message(chat_id=user_id, text=dowload_anwers["ok"])
-        await add_total_completed(user_id)
-        await set_already_completed(user_id)
+        await ending_answer(user_id)
     except Exception as e:
         await bot.send_message(chat_id=user_id, text=dowload_anwers["error"])
         print(f"{user_id} получил ошибку <<{e}>> при загрузке фото")
@@ -47,8 +50,7 @@ async def download_text(message: Message, bot: Bot, user_id: int):
         with open(f"{download_path}/{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.txt", "w") as file:
             file.write(message.text)
         await bot.send_message(chat_id=user_id, text=dowload_anwers['ok'])
-        await add_total_completed(user_id)
-        await set_already_completed(user_id)
+        await ending_answer(user_id)
     except Exception as e:
         await bot.send_message(chat_id=user_id, text=dowload_anwers['error'])
         print(f"{user_id} получил ошибку <<{e}>> при загрузке текста")
@@ -62,8 +64,42 @@ async def download_video(message: Message, bot: Bot, user_id: int):
         file = await bot.get_file(file_id) 
         await bot.download_file(file.file_path, f"{download_path}/{user_id}-{now_datetime[1].replace(':','_').replace('.','_')}.mp4")
         await bot.send_message(chat_id=user_id, text=dowload_anwers['ok'])
-        await add_total_completed(user_id)
-        await set_already_completed(user_id)
+        await ending_answer(user_id)
     except Exception as e:
         await bot.send_message(chat_id=user_id, text=dowload_anwers['error'])
         print(f"{user_id} получил ошибку <<{e}>> при загрузке видео")
+
+
+async def ending_answer(tg_id):
+    await rq.add_total_completed(tg_id)
+    await rq.set_already_completed(tg_id)
+    await last_answer(tg_id=tg_id)
+
+
+async def last_answer(tg_id):
+    really_end = await rq.it_user_end(tg_id)
+    if really_end:
+        quest = all_quests[f"quest_{await rq.info_user_in_course(tg_id)}"]
+        if await rq.is_user_completed_all(tg_id):
+            if quest == all_quests["quest_0"]:
+                await send_promo(tg_id, is_probn=True)
+            else:
+                await send_promo(tg_id, is_probn=False)
+
+
+async def send_promo(tg_id, is_probn):
+    '''
+    :tg_id: id пользователя для которого делаем и отсылаем промокод.
+    '''
+
+    tmp_promo = await rq.auto_create_promocode(discount=100, one_time=True, for_user_id=tg_id, prefix=f"{tg_id}-")
+    if is_probn:
+        result = f"Поздравляю!\n\
+Ты закончил тестовый период! Ты прислал ответы на все задания, поэтому получаешь скидку на наш любой курс! \
+Вот твой промокод: <code>{tmp_promo}</code> (Ты можешь его скопировать, нажав на него)."
+    else:
+        result = f"Поздравляю!\n\
+Ты закончил наш первый курс! Ты прислал ответы на все задания, поэтому получаешь скидку на наш любой другой курс! \
+Они уже в разработке, поэтому готовься к скорому продолжению самосовершенствования! \
+Вот твой промокод: <code>{tmp_promo}</code> (Ты можешь его скопировать, нажав на него)."
+    await mail_sertain_text(tg_id=tg_id, text=result)

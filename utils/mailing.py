@@ -88,31 +88,25 @@ async def mailing(tg_id):
 
     Отправляет задание пользователю исходя из дня на курсе.
     '''
-    # 1) Сделать отправку задания лично одному человеку - done
-    # 2) Сделать прибавку номера дня для одного человека ( await rq.add_day() ) - done
-    # 3) Сделать обновление конца курса эффективным - done
-    # 4) Сделать оповещение, что курс окончен для одног человека - done
     current_day = await rq.what_day_user(tg_id)
-    really_end = await rq.it_user_end(tg_id)
     quest = all_quests[f"quest_{await rq.info_user_in_course(tg_id)}"]
     #print(quest)
     has_photo = True if quest[current_day]["photo"] != 0 else False
     has_url = True if quest[current_day]["url"] != 0 else False
 
-    if not really_end:
-        if has_photo and has_url:
-            await mail_and_text_photo_url(tg_id=tg_id, quest=quest, current_day=current_day)
-        if not (has_photo and has_url):
-            await mail_sertain_text(tg_id=tg_id, text="Если увидели это, напишите в техподдержку")
-        await rq.set_already_received(tg_id)
-        
-        await rq.add_day(tg_id)
-    elif quest == all_quests["quest_0"]:
-        await end_mailing_probn(tg_id)
-        await scheduler_func.remove_schedule_task(tg_id)
-        await rq.remove_user_schedule(tg_id)
-    else:
-        await end_mailing(tg_id)
+    if has_photo and has_url:
+        await mail_and_text_photo_url(tg_id=tg_id, quest=quest, current_day=current_day)
+    if not (has_photo and has_url):
+        await mail_sertain_text(tg_id=tg_id, text="Если увидели это, напишите в техподдержку")
+    await rq.set_already_received(tg_id)
+    
+    await rq.add_day(tg_id)
+    really_end = await rq.it_user_end(tg_id)
+    if really_end:
+        if quest == all_quests["quest_0"]:
+            await end_mailing_probn(tg_id)
+        else:
+            await end_mailing(tg_id)
         await scheduler_func.remove_schedule_task(tg_id)
         await rq.remove_user_schedule(tg_id)
 
@@ -123,8 +117,6 @@ async def end_mailing_probn(tg_id):
     '''
     await mail_sertain_text(tg_id=tg_id, text="Это было финальное задание из пробного курса 🎉\n\n\
 Если тебе понравилось — выбирай один из других курсов в боте. Мы будем рады продолжить путь вместе и помогать тебе расти дальше 💡")
-    if await rq.is_user_completed_all(tg_id):
-        await send_promo(tg_id, is_probn=True)
 
 async def end_mailing(tg_id):
     '''
@@ -132,22 +124,4 @@ async def end_mailing(tg_id):
     '''
     await mail_sertain_text(tg_id=tg_id, text="Это было финальное задание 🎉\n\n\
 Если тебе понравилось — выбирай один из других курсов в боте. Мы будем рады продолжить путь вместе и помогать тебе расти дальше 💡")
-    if await rq.is_user_completed_all(tg_id):
-        await send_promo(tg_id, is_probn=False)
 
-async def send_promo(tg_id, is_probn):
-    '''
-    :tg_id: id пользователя для которого делаем и отсылаем промокод.
-    '''
-
-    tmp_promo = await rq.auto_create_promocode(discount=100, one_time=True, for_user_id=tg_id, prefix=f"{tg_id}-")
-    if is_probn:
-        result = f"Поздравляю!\n\
-Ты закончил тестовый период! Ты прислал ответы на все задания, поэтому получаешь скидку на наш любой курс! \
-Вот твой промокод: <code>{tmp_promo}</code> (Ты можешь его скопировать, нажав на него)."
-    else:
-        result = f"Поздравляю!\n\
-Ты закончил наш первый курс! Ты прислал ответы на все задания, поэтому получаешь скидку на наш любой другой курс! \
-Они уже в разработке, поэтому готовься к скорому продолжению самосовершенствования! \
-Вот твой промокод: <code>{tmp_promo}</code> (Ты можешь его скопировать, нажав на него)."
-    await mail_sertain_text(tg_id=tg_id, text=result)
