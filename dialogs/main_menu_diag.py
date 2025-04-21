@@ -134,7 +134,7 @@ async def back_main(callback, button: Button,
     '''Возвращает в окно главного меню.'''
     await dialog_manager.switch_to(MainMenu.START)
 
-##Функцции для тестов
+###Функцции для тестов
 async def testing_add_day(callback, button: Button, dialog_manager: DialogManager):
     '''Функция для ручного добавления дня курса в БД и моментальной отсылки задания'''
     # print(dialog_manager.dialog_data["user_id"])
@@ -145,7 +145,7 @@ async def testing_add_day(callback, button: Button, dialog_manager: DialogManage
 async def create_promo(callback, button, dialog_manager: DialogManager):
     await rq.auto_create_promocode(100, False, for_user_id=605954613)
     return
-##
+###
 
 class MainMenu(StatesGroup):
     START = State()
@@ -185,6 +185,7 @@ main_menu = Dialog(
             Url(Const("Тех.поддержка"), url=Const("https://t.me/KladovkaDesignHelp_bot")),
             Button(Const("Оставить отзыв"), id="feedback", on_click=feedback_wind)
         ),
+        ##Кнопки для тестов
         # Row(
         #     Button(Const("create rand promo"), id="create_promo", on_click=create_promo)
         # ),
@@ -197,6 +198,7 @@ main_menu = Dialog(
         #     Button(Const("clear all"), id="clear_course",
         #            on_click=test_clear_all),
         # ),
+        ###
         getter=get_id,
         state=MainMenu.START
     ),
