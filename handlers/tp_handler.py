@@ -20,7 +20,7 @@ router = Router()
 
 @router.message(Command('start'))
 async def cmd_start(message: types.Message):
-    print(message.chat.id)
+    #print(message.chat.id)
     await message.answer("Привет! Здесь ты можешь описать свою проблему, а наши специалисты ответят тебе.")
 
 @router.message((F.text) & F.chat.id != id_admin)
