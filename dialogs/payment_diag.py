@@ -156,7 +156,7 @@ async def process_selecting_time(message: Message,
             return
     except ValueError as e:
         await message.answer(text='Введённое значение указано не в верном формате, проверь его')
-        print(e)
+        print(f"У пользователя {message.from_user.id} ошибка во время сохранения времени \"{e}\"")
         return
 
     user_id = message.from_user.id
@@ -201,11 +201,15 @@ async def on_submit(callback: CallbackQuery, button: Button, dialog_manager: Dia
         await callback.answer("Выбери минимум 2 дня!", show_alert=True)
         return
     
-    await callback.message.answer(f"Готово! Мы изменили дни, в которые ты будешь получать задания: \
+    await callback.message.answer(f"Готово! Мы сохранили дни, в которые ты будешь получать задания: \
 <b>{", ".join([TRANSLATE_DAYS[k] for k in TRANSLATE_DAYS if k in selected_days])}</b>")
     
     # Продолжаем работу, зная, что выбрано минимум 2 дня
-    await dialog_manager.switch_to(PaymentMenu.SELECT_START_DATE, show_mode=ShowMode.DELETE_AND_SEND)
+    
+    ###По просьбе Сони временно убрана возможность выбора даты старта
+    #await dialog_manager.switch_to(PaymentMenu.SELECT_START_DATE, show_mode=ShowMode.DELETE_AND_SEND)
+    await final_saving_time_and_days(callback.message, dialog_manager)
+    ###
 
 
 async def process_selecting_start_date(callback: CallbackQuery, button: Button, dialog_manager: DialogManager):
@@ -252,7 +256,9 @@ async def final_saving_time_and_days(message: Message, dialog_manager: DialogMan
     user_time_hour = dialog_manager.dialog_data["user_time_hour"]
     user_time_minute = dialog_manager.dialog_data["user_time_minute"]
     selected_days = dialog_manager.dialog_data["selected_days"]
-    selected_start_date = dialog_manager.dialog_data["user_selected_start_date"]
+    ###По просьбе Сони временно убрана возможность выбора даты старта
+    #selected_start_date = dialog_manager.dialog_data["user_selected_start_date"]
+    selected_start_date = 0
     try:
         perenos = selected_start_date if (selected_start_date == 0) or (selected_start_date == 1) else 2
         await scheduler_func.update_schedule_task(user_id, user_time_hour, user_time_minute, selected_days, selected_start_date, perenos)

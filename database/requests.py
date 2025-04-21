@@ -672,7 +672,7 @@ async def is_user_completed_all(tg_id):
     try:
         async with async_session() as session:
             user = await session.scalar(select(Course).where(Course.tg_id == tg_id))
-            print(user, user.total_completed, user.payment_period, user.total_completed == user.payment_period)
+            #print(user, user.total_completed, user.payment_period, user.total_completed == user.payment_period)
             if user and user.total_completed == user.payment_period:
                 return True
             return False
