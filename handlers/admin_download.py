@@ -8,7 +8,7 @@ from aiogram.types import Message
 from datetime import date
 
 from pathlib import Path
-from os import mkdir, remove
+from os import mkdir, remove, path
 
 router = Router()
 router.message.filter(ItsAdmin())
@@ -33,7 +33,8 @@ async def download_zip(admin_id, start_y, start_m, start_d, end_y, end_m, end_d)
     BASE_DIR = Path(__file__).resolve().parent.parent
     source1 = f"{BASE_DIR}/tmp"
     distinate = f"{BASE_DIR}/tmp_archivus"
-    mkdir(distinate)
+    if not path.exists(distinate):
+        mkdir(distinate)
     # print(f'{BASE_DIR}\n{distinate}')
     # Создание архивов по выбранным датам
     while int(start_y) <= int(end_y):
@@ -62,7 +63,7 @@ async def download_zip(admin_id, start_y, start_m, start_d, end_y, end_m, end_d)
     arch = shutil.make_archive(f"archivus/{date.today()}", "zip", source2)
     await mailing.mail_file(id=admin_id, file_path=arch)
     remove(arch)
-    remove(distinate)
+    shutil.rmtree(distinate)
     return
 
 # @router.message(AdminDialog.download, F.text)
@@ -85,7 +86,7 @@ async def download_zippp(message: Message):
     if not (len(start_y) == 4 and len(end_y) == 4
             and 1 <= int(start_m) <= 12 and 1 <= int(end_m) <= 12
             and 1 <= int(start_d) <= 31 and 1 <= int(end_d) <= 31):
-        mailing.mail_sertain_text(
+        await mailing.mail_sertain_text(
             chat_id, text="Неверный формат или значения, перепроверьте. Указывайте числа в формате 09 или 11.")
     else:
         await download_zip(message.from_user.id, int(start_y), int(start_m), int(start_d), int(end_y), int(end_m), int(end_d))
