@@ -32,6 +32,15 @@ TRANSLATE_DAYS = {
     "sun": "Вс",
 }
 
+RUSSIAN_WEEKDAYS = {
+    "Monday": "в Понедельник",
+    "Tuesday": "во Вторник",
+    "Wednesday": "в Среду",
+    "Thursday": "в Четверг",
+    "Friday": "в Пятницу",
+    "Saturday": "в Субботу",
+    "Sunday": "в Воскресенье",
+}
 
 async def get_id(dialog_manager: DialogManager, **kwargs):
     '''
@@ -262,14 +271,16 @@ async def final_saving_time_and_days(message: Message, dialog_manager: DialogMan
     try:
         perenos = selected_start_date if (selected_start_date == 0) or (selected_start_date == 1) else 2
         await scheduler_func.update_schedule_task(user_id, user_time_hour, user_time_minute, selected_days, selected_start_date, perenos)
+        start_date, start_day_of_week = await scheduler_func.what_next_date_job(tg_id=user_id)
         result_answer = f"Готово! Всё сохранено. Ты будешь получать задания в <b>{user_time_hour}:{user_time_minute}</b>"\
-                             f" по <b>{", ".join([TRANSLATE_DAYS[k] for k in TRANSLATE_DAYS if k in selected_days])}</b>"
-        if selected_start_date == 1:
-            result_answer += " не раньше <b>завтрашнего дня</b>."
-        elif selected_start_date == 0:
-            result_answer += ", когда наступит выбранное время."
-        else:
-            result_answer += f" не раньше <b>{selected_start_date}</b>."
+                             f" по <b>{", ".join([TRANSLATE_DAYS[k] for k in TRANSLATE_DAYS if k in selected_days])}</b>.\n\n"\
+                             f"Первое задание ты получишь в <b>{user_time_hour}:{user_time_minute} {start_date} {RUSSIAN_WEEKDAYS[start_day_of_week]}</b>"
+        # if selected_start_date == 1:
+        #     result_answer += " не раньше <b>завтрашнего дня</b>."
+        # elif selected_start_date == 0:
+        #     result_answer += ", когда наступит выбранное время."
+        # else:
+        #     result_answer += f" не раньше <b>{selected_start_date}</b>."
         
         await message.answer(result_answer)
 
@@ -416,21 +427,21 @@ payment_menu = Dialog(
         Row(
             Checkbox(
                 checked_text=Const("✅ Пн"),
-                unchecked_text=Const("❌ Пн"),
+                unchecked_text=Const("⏹️ Пн"),
                 id="mon",
                 default=False,
                 on_click=toggle_day
             ),
             Checkbox(
                 checked_text=Const("✅ Вт"),
-                unchecked_text=Const("❌ Вт"),
+                unchecked_text=Const("⏹️ Вт"),
                 id="tue",
                 default=False,
                 on_click=toggle_day
             ),
             Checkbox(
                 checked_text=Const("✅ Ср"),
-                unchecked_text=Const("❌ Ср"),
+                unchecked_text=Const("⏹️ Ср"),
                 id="wed",
                 default=False,
                 on_click=toggle_day
@@ -439,28 +450,28 @@ payment_menu = Dialog(
         Row(
             Checkbox(
                 checked_text=Const("✅ Чт"),
-                unchecked_text=Const("❌ Чт"),
+                unchecked_text=Const("⏹️ Чт"),
                 id="thu",
                 default=False,
                 on_click=toggle_day
             ),
             Checkbox(
                 checked_text=Const("✅ Пт"),
-                unchecked_text=Const("❌ Пт"),
+                unchecked_text=Const("⏹️ Пт"),
                 id="fri",
                 default=False,
                 on_click=toggle_day
             ),
             Checkbox(
                 checked_text=Const("✅ Сб"),
-                unchecked_text=Const("❌ Сб"),
+                unchecked_text=Const("⏹️ Сб"),
                 id="sat",
                 default=False,
                 on_click=toggle_day
             ),
             Checkbox(
                 checked_text=Const("✅ Вс"),
-                unchecked_text=Const("❌ Вс"),
+                unchecked_text=Const("⏹️ Вс"),
                 id="sun",
                 default=False,
                 on_click=toggle_day
