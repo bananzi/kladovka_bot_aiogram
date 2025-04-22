@@ -172,3 +172,10 @@ async def update_schedule_stop_until(tg_id, new_stop_until):
         new_stop_until=user_info["stop_until"],
         new_day_sending=user_info["day_sending"]
     )
+
+
+async def what_next_date_job(tg_id):
+    next_date = scheduler.get_job(f"job_{tg_id}").next_run_time
+    date_str = next_date.strftime("%d.%m.%Y")
+    weekday_str = next_date.strftime("%A")
+    return (date_str, weekday_str)
