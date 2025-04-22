@@ -261,21 +261,21 @@ settings = Dialog(
         Row(
             Checkbox(
                 checked_text=Const("✅ Пн"),
-                unchecked_text=Const("❌ Пн"),
+                unchecked_text=Const("⏹️ Пн"),
                 id="mon",
                 default=False,
                 on_click=toggle_day
             ),
             Checkbox(
                 checked_text=Const("✅ Вт"),
-                unchecked_text=Const("❌ Вт"),
+                unchecked_text=Const("⏹️ Вт"),
                 id="tue",
                 default=False,
                 on_click=toggle_day
             ),
             Checkbox(
                 checked_text=Const("✅ Ср"),
-                unchecked_text=Const("❌ Ср"),
+                unchecked_text=Const("⏹️ Ср"),
                 id="wed",
                 default=False,
                 on_click=toggle_day
@@ -284,28 +284,28 @@ settings = Dialog(
         Row(
             Checkbox(
                 checked_text=Const("✅ Чт"),
-                unchecked_text=Const("❌ Чт"),
+                unchecked_text=Const("⏹️ Чт"),
                 id="thu",
                 default=False,
                 on_click=toggle_day
             ),
             Checkbox(
                 checked_text=Const("✅ Пт"),
-                unchecked_text=Const("❌ Пт"),
+                unchecked_text=Const("⏹️ Пт"),
                 id="fri",
                 default=False,
                 on_click=toggle_day
             ),
             Checkbox(
                 checked_text=Const("✅ Сб"),
-                unchecked_text=Const("❌ Сб"),
+                unchecked_text=Const("⏹️ Сб"),
                 id="sat",
                 default=False,
                 on_click=toggle_day
             ),
             Checkbox(
                 checked_text=Const("✅ Вс"),
-                unchecked_text=Const("❌ Вс"),
+                unchecked_text=Const("⏹️ Вс"),
                 id="sun",
                 default=False,
                 on_click=toggle_day
